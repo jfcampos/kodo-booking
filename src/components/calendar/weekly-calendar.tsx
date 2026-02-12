@@ -74,11 +74,27 @@ export function WeeklyCalendar({
     }
   }
 
-  function getBookingsForDay(date: Date) {
-    return bookings.filter((b) => {
-      const bookingDate = new Date(b.startTime).toDateString();
-      return bookingDate === date.toDateString();
-    });
+  function getBookingSegmentsForDay(date: Date) {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+
+    return bookings
+      .filter((b) => {
+        const start = new Date(b.startTime);
+        const end = new Date(b.endTime);
+        return start < dayEnd && end > dayStart;
+      })
+      .map((b) => {
+        const start = new Date(b.startTime);
+        const end = new Date(b.endTime);
+        return {
+          ...b,
+          displayStart: start < dayStart ? dayStart : start,
+          displayEnd: end > dayEnd ? dayEnd : end,
+        };
+      });
   }
 
   return (
@@ -131,7 +147,7 @@ export function WeeklyCalendar({
           <DayColumn
             key={day.toISOString()}
             date={day}
-            bookings={getBookingsForDay(day)}
+            bookings={getBookingSegmentsForDay(day)}
             currentUserId={currentUserId}
             granularityMinutes={granularityMinutes}
             onSlotClick={handleSlotClick}

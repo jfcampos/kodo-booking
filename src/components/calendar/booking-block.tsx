@@ -7,6 +7,8 @@ type BookingBlockProps = {
   userName: string;
   startTime: Date;
   endTime: Date;
+  displayStart: Date;
+  displayEnd: Date;
   isOwn: boolean;
   onClick: () => void;
 };
@@ -16,12 +18,14 @@ export function BookingBlock({
   userName,
   startTime,
   endTime,
+  displayStart,
+  displayEnd,
   isOwn,
   onClick,
 }: BookingBlockProps) {
-  const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+  const startHour = displayStart.getHours() + displayStart.getMinutes() / 60;
   const duration =
-    (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    (displayEnd.getTime() - displayStart.getTime()) / (1000 * 60 * 60);
 
   return (
     <button

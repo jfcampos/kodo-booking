@@ -8,6 +8,8 @@ type Booking = {
   title: string;
   startTime: Date;
   endTime: Date;
+  displayStart: Date;
+  displayEnd: Date;
   user: { id: string; name: string | null };
 };
 
@@ -79,11 +81,13 @@ export function DayColumn({
         )}
         {bookings.map((booking) => (
           <BookingBlock
-            key={booking.id}
+            key={`${booking.id}-${new Date(booking.displayStart).toISOString()}`}
             title={booking.title}
             userName={booking.user.name ?? "Unknown"}
             startTime={new Date(booking.startTime)}
             endTime={new Date(booking.endTime)}
+            displayStart={new Date(booking.displayStart)}
+            displayEnd={new Date(booking.displayEnd)}
             isOwn={booking.user.id === currentUserId}
             onClick={() => onBookingClick(booking.id)}
           />
