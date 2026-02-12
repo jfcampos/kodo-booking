@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__activate_project",
+      "mcp__serena__list_memories",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__list_dir",
+      "Bash(pnpm create:*)",
+      "Bash(timeout 15 pnpm dev:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "serena"
+  ],
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true
+  }
+}
