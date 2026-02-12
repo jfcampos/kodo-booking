@@ -59,28 +59,43 @@ export function BookingDialog({
 }: BookingDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedStartTime, setSelectedStartTime] = useState<string>("");
   const [selectedEndTime, setSelectedEndTime] = useState<string>("");
   const [recurrenceWeeks, setRecurrenceWeeks] = useState<string>("0");
 
+  // yyyy-mm-dd in local time for the date input
+  const defaultDateStr = useMemo(() => {
+    if (!startTime) return "";
+    const y = startTime.getFullYear();
+    const m = String(startTime.getMonth() + 1).padStart(2, "0");
+    const d = String(startTime.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }, [startTime]);
+
+  const activeDate = selectedDate || defaultDateStr;
+
   const { startTimeOptions, snappedStartIso } = useMemo(() => {
-    if (!startTime) return { startTimeOptions: [], snappedStartIso: "" };
+    if (!activeDate) return { startTimeOptions: [], snappedStartIso: "" };
     const options: { value: string; label: string }[] = [];
     const granMs = granularityMinutes * 60 * 1000;
-    const dayStart = new Date(startTime);
-    dayStart.setHours(0, 0, 0, 0);
+    const [y, m, d] = activeDate.split("-").map(Number);
+    const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0);
     const slotsPerDay = Math.floor((24 * 60) / granularityMinutes);
     let snapped = "";
+    const clickedMs = startTime?.getTime() ?? 0;
     for (let i = 0; i < slotsPerDay; i++) {
       const slot = new Date(dayStart.getTime() + i * granMs);
       const iso = slot.toISOString();
       options.push({ value: iso, label: formatTime(slot) });
-      if (!snapped && slot.getTime() >= startTime.getTime()) {
+      if (!snapped && slot.getTime() >= clickedMs) {
         snapped = iso;
       }
     }
-    return { startTimeOptions: options, snappedStartIso: snapped || options[0]?.value || "" };
-  }, [startTime, granularityMinutes]);
+    // If date changed from clicked day, default to first slot
+    const fallback = options[0]?.value || "";
+    return { startTimeOptions: options, snappedStartIso: snapped || fallback };
+  }, [activeDate, startTime, granularityMinutes]);
 
   const resolvedStartTime =
     selectedStartTime ? new Date(selectedStartTime)
@@ -183,7 +198,7 @@ export function BookingDialog({
   if (mode === "create") {
     return (
       <Dialog open={open} onOpenChange={(v) => {
-        if (!v) { setSelectedStartTime(""); setSelectedEndTime(""); setRecurrenceWeeks("0"); }
+        if (!v) { setSelectedDate(""); setSelectedStartTime(""); setSelectedEndTime(""); setRecurrenceWeeks("0"); }
         onOpenChange(v);
       }}>
         <DialogContent>
@@ -191,6 +206,18 @@ export function BookingDialog({
             <DialogTitle>New Booking</DialogTitle>
           </DialogHeader>
           <form action={handleCreate} className="space-y-3">
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={activeDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedStartTime("");
+                  setSelectedEndTime("");
+                }}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Start Time</Label>
