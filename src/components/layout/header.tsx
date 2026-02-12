@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import Link from "next/link";
 
 export async function Header() {
@@ -25,6 +26,7 @@ export async function Header() {
               History
             </Button>
           </Link>
+          <ThemeToggle />
           <span className="text-sm text-muted-foreground">
             {session.user.name}
           </span>
