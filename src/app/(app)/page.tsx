@@ -35,6 +35,7 @@ export default async function HomePage() {
       currentUserId={session.user.id}
       currentUserRole={session.user.role}
       granularityMinutes={settings.granularityMinutes}
+      maxBookingDurationHours={settings.maxBookingDurationHours}
     />
   );
 }

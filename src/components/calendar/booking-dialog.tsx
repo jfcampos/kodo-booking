@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   createBooking,
+  createRecurringBooking,
   cancelBooking,
   editBooking,
 } from "@/lib/actions/bookings";
@@ -23,7 +31,6 @@ type BookingDialogProps = {
   onOpenChange: (open: boolean) => void;
   roomId: string;
   startTime?: Date;
-  endTime?: Date;
   booking?: {
     id: string;
     title: string;
@@ -35,6 +42,7 @@ type BookingDialogProps = {
   currentUserId: string;
   currentUserRole: string;
   granularityMinutes: number;
+  maxBookingDurationHours: number;
 };
 
 export function BookingDialog({
@@ -43,13 +51,54 @@ export function BookingDialog({
   onOpenChange,
   roomId,
   startTime,
-  endTime,
   booking,
   currentUserId,
   currentUserRole,
+  granularityMinutes,
+  maxBookingDurationHours,
 }: BookingDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStartTime, setSelectedStartTime] = useState<string>("");
+  const [selectedEndTime, setSelectedEndTime] = useState<string>("");
+  const [recurrenceWeeks, setRecurrenceWeeks] = useState<string>("0");
+
+  const startTimeOptions = useMemo(() => {
+    if (!startTime) return [];
+    const options: { value: string; label: string }[] = [];
+    const granMs = granularityMinutes * 60 * 1000;
+    const dayStart = new Date(startTime);
+    dayStart.setHours(0, 0, 0, 0);
+    const slotsPerDay = Math.floor((24 * 60) / granularityMinutes);
+    for (let i = 0; i < slotsPerDay; i++) {
+      const slot = new Date(dayStart.getTime() + i * granMs);
+      options.push({
+        value: slot.toISOString(),
+        label: formatTime(slot),
+      });
+    }
+    return options;
+  }, [startTime, granularityMinutes]);
+
+  const resolvedStartTime =
+    selectedStartTime ? new Date(selectedStartTime)
+    : startTime;
+
+  const endTimeOptions = useMemo(() => {
+    if (!resolvedStartTime) return [];
+    const options: { value: string; label: string }[] = [];
+    const maxMs = maxBookingDurationHours * 60 * 60 * 1000;
+    const granMs = granularityMinutes * 60 * 1000;
+    const slots = Math.floor(maxMs / granMs);
+    for (let i = 1; i <= slots; i++) {
+      const end = new Date(resolvedStartTime.getTime() + i * granMs);
+      options.push({
+        value: end.toISOString(),
+        label: formatTime(end),
+      });
+    }
+    return options;
+  }, [resolvedStartTime, granularityMinutes, maxBookingDurationHours]);
 
   const isOwn = booking?.user.id === currentUserId;
   const isAdmin = currentUserRole === "ADMIN";
@@ -57,17 +106,29 @@ export function BookingDialog({
   const canCancel =
     canEdit && booking && new Date(booking.startTime) > new Date();
 
+  const resolvedEndTime =
+    selectedEndTime ? new Date(selectedEndTime)
+    : endTimeOptions.length > 0 ? new Date(endTimeOptions[0].value)
+    : undefined;
+
   async function handleCreate(formData: FormData) {
+    if (!resolvedStartTime || !resolvedEndTime) return;
     setLoading(true);
     setError(null);
     try {
-      await createBooking({
+      const base = {
         title: formData.get("title") as string,
         notes: (formData.get("notes") as string) || undefined,
         roomId,
-        startTime: startTime!,
-        endTime: endTime!,
-      });
+        startTime: resolvedStartTime,
+        endTime: resolvedEndTime,
+      };
+      const weeks = Number(recurrenceWeeks);
+      if (weeks > 0) {
+        await createRecurringBooking({ ...base, recurrenceWeeks: weeks });
+      } else {
+        await createBooking(base);
+      }
       onOpenChange(false);
     } catch (err) {
       setError(
@@ -110,16 +171,53 @@ export function BookingDialog({
 
   if (mode === "create") {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={(v) => {
+        if (!v) { setSelectedStartTime(""); setSelectedEndTime(""); setRecurrenceWeeks("0"); }
+        onOpenChange(v);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New Booking</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            {startTime && formatTime(startTime)} &ndash;{" "}
-            {endTime && formatTime(endTime)}
-          </p>
           <form action={handleCreate} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Start Time</Label>
+                <Select
+                  value={selectedStartTime || startTime?.toISOString() || ""}
+                  onValueChange={(v) => { setSelectedStartTime(v); setSelectedEndTime(""); }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select start time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {startTimeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>End Time</Label>
+                <Select
+                  value={selectedEndTime || endTimeOptions[0]?.value || ""}
+                  onValueChange={setSelectedEndTime}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select end time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {endTimeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div>
               <Label>Title</Label>
               <Input name="title" placeholder="Band practice" required />
@@ -128,6 +226,24 @@ export function BookingDialog({
               <Label>Notes (optional)</Label>
               <Input name="notes" placeholder="Any details..." />
             </div>
+            {isAdmin && (
+              <div>
+                <Label>Repeat Weekly</Label>
+                <Select value={recurrenceWeeks} onValueChange={setRecurrenceWeeks}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No repeat</SelectItem>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i + 2} value={String(i + 2)}>
+                        {i + 2} weeks
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Booking..." : "Book"}

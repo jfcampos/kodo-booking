@@ -26,6 +26,7 @@ type WeeklyCalendarProps = {
   currentUserId: string;
   currentUserRole: string;
   granularityMinutes: number;
+  maxBookingDurationHours: number;
 };
 
 export function WeeklyCalendar({
@@ -33,6 +34,7 @@ export function WeeklyCalendar({
   currentUserId,
   currentUserRole,
   granularityMinutes,
+  maxBookingDurationHours,
 }: WeeklyCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id ?? "");
@@ -62,10 +64,7 @@ export function WeeklyCalendar({
     if (currentUserRole === "VIEWER") return;
     const startTime = new Date(date);
     startTime.setHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
-    const endTime = new Date(
-      startTime.getTime() + granularityMinutes * 60 * 1000
-    );
-    setDialogState({ open: true, mode: "create", startTime, endTime });
+    setDialogState({ open: true, mode: "create", startTime });
   }
 
   function handleBookingClick(bookingId: string) {
@@ -150,11 +149,11 @@ export function WeeklyCalendar({
         }}
         roomId={selectedRoomId}
         startTime={dialogState.startTime}
-        endTime={dialogState.endTime}
         booking={dialogState.booking}
         currentUserId={currentUserId}
         currentUserRole={currentUserRole}
         granularityMinutes={granularityMinutes}
+        maxBookingDurationHours={maxBookingDurationHours}
       />
     </div>
   );
