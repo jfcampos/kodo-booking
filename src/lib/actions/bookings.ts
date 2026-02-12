@@ -47,6 +47,15 @@ export async function createBooking(input: {
     );
   }
 
+  // Validate booking duration
+  const durationMs = parsed.endTime.getTime() - parsed.startTime.getTime();
+  const maxDurationMs = settings.maxBookingDurationHours * 60 * 60 * 1000;
+  if (durationMs > maxDurationMs) {
+    throw new Error(
+      `Booking duration cannot exceed ${settings.maxBookingDurationHours} hours`
+    );
+  }
+
   // Validate advance window
   const maxDate = addDays(new Date(), settings.maxAdvanceDays);
   if (parsed.startTime > maxDate) {

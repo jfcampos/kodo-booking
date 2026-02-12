@@ -13,6 +13,7 @@ export async function updateSettings(input: {
   granularityMinutes: number;
   maxAdvanceDays: number;
   maxActiveBookings: number;
+  maxBookingDurationHours: number;
 }) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN")

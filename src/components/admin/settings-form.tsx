@@ -11,6 +11,7 @@ type Settings = {
   granularityMinutes: number;
   maxAdvanceDays: number;
   maxActiveBookings: number;
+  maxBookingDurationHours: number;
 };
 
 export function SettingsForm({ settings }: { settings: Settings }) {
@@ -26,6 +27,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         granularityMinutes: Number(formData.get("granularityMinutes")),
         maxAdvanceDays: Number(formData.get("maxAdvanceDays")),
         maxActiveBookings: Number(formData.get("maxActiveBookings")),
+        maxBookingDurationHours: Number(formData.get("maxBookingDurationHours")),
       });
       setSaved(true);
       router.refresh();
@@ -64,6 +66,16 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           defaultValue={settings.maxActiveBookings}
           min={1}
           max={50}
+        />
+      </div>
+      <div>
+        <Label>Max Booking Duration (hours)</Label>
+        <Input
+          name="maxBookingDurationHours"
+          type="number"
+          defaultValue={settings.maxBookingDurationHours}
+          min={1}
+          max={24}
         />
       </div>
       <Button type="submit" disabled={loading}>

@@ -12,6 +12,7 @@ async function main() {
       granularityMinutes: 30,
       maxAdvanceDays: 14,
       maxActiveBookings: 3,
+      maxBookingDurationHours: 4,
     },
   });
   console.log("Seeded default AppSettings");

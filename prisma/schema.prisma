@@ -117,8 +117,9 @@ model InviteLink {
 }
 
 model AppSettings {
-  id                 String @id @default("default")
-  granularityMinutes Int    @default(30)
-  maxAdvanceDays     Int    @default(14)
-  maxActiveBookings  Int    @default(3)
+  id                       String @id @default("default")
+  granularityMinutes       Int    @default(30)
+  maxAdvanceDays           Int    @default(14)
+  maxActiveBookings        Int    @default(3)
+  maxBookingDurationHours  Int    @default(4)
 }
