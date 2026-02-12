@@ -63,25 +63,28 @@ export function BookingDialog({
   const [selectedEndTime, setSelectedEndTime] = useState<string>("");
   const [recurrenceWeeks, setRecurrenceWeeks] = useState<string>("0");
 
-  const startTimeOptions = useMemo(() => {
-    if (!startTime) return [];
+  const { startTimeOptions, snappedStartIso } = useMemo(() => {
+    if (!startTime) return { startTimeOptions: [], snappedStartIso: "" };
     const options: { value: string; label: string }[] = [];
     const granMs = granularityMinutes * 60 * 1000;
     const dayStart = new Date(startTime);
     dayStart.setHours(0, 0, 0, 0);
     const slotsPerDay = Math.floor((24 * 60) / granularityMinutes);
+    let snapped = "";
     for (let i = 0; i < slotsPerDay; i++) {
       const slot = new Date(dayStart.getTime() + i * granMs);
-      options.push({
-        value: slot.toISOString(),
-        label: formatTime(slot),
-      });
+      const iso = slot.toISOString();
+      options.push({ value: iso, label: formatTime(slot) });
+      if (!snapped && slot.getTime() >= startTime.getTime()) {
+        snapped = iso;
+      }
     }
-    return options;
+    return { startTimeOptions: options, snappedStartIso: snapped || options[0]?.value || "" };
   }, [startTime, granularityMinutes]);
 
   const resolvedStartTime =
     selectedStartTime ? new Date(selectedStartTime)
+    : snappedStartIso ? new Date(snappedStartIso)
     : startTime;
 
   const endTimeOptions = useMemo(() => {
@@ -192,7 +195,7 @@ export function BookingDialog({
               <div>
                 <Label>Start Time</Label>
                 <Select
-                  value={selectedStartTime || startTime?.toISOString() || ""}
+                  value={selectedStartTime || snappedStartIso}
                   onValueChange={(v) => { setSelectedStartTime(v); setSelectedEndTime(""); }}
                 >
                   <SelectTrigger>
