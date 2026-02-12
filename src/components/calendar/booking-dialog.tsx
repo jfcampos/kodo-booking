@@ -106,9 +106,17 @@ export function BookingDialog({
   const canCancel =
     canEdit && booking && new Date(booking.startTime) > new Date();
 
+  const defaultEndTimeIndex = useMemo(() => {
+    if (endTimeOptions.length === 0) return 0;
+    const defaultDurationMs = 2 * 60 * 60 * 1000;
+    const granMs = granularityMinutes * 60 * 1000;
+    const targetIndex = Math.round(defaultDurationMs / granMs) - 1;
+    return Math.min(targetIndex, endTimeOptions.length - 1);
+  }, [endTimeOptions, granularityMinutes]);
+
   const resolvedEndTime =
     selectedEndTime ? new Date(selectedEndTime)
-    : endTimeOptions.length > 0 ? new Date(endTimeOptions[0].value)
+    : endTimeOptions.length > 0 ? new Date(endTimeOptions[defaultEndTimeIndex].value)
     : undefined;
 
   async function handleCreate(formData: FormData) {
@@ -202,7 +210,7 @@ export function BookingDialog({
               <div>
                 <Label>End Time</Label>
                 <Select
-                  value={selectedEndTime || endTimeOptions[0]?.value || ""}
+                  value={selectedEndTime || endTimeOptions[defaultEndTimeIndex]?.value || ""}
                   onValueChange={setSelectedEndTime}
                 >
                   <SelectTrigger>
