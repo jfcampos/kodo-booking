@@ -252,3 +252,12 @@ export async function createRecurringBooking(input: {
   revalidatePath("/");
   return { recurringId, count: bookings.length };
 }
+
+export async function getUserBookingHistory() {
+  const user = await requireAuth();
+  return prisma.booking.findMany({
+    where: { userId: user.id },
+    include: { room: { select: { name: true } } },
+    orderBy: { startTime: "desc" },
+  });
+}
