@@ -17,7 +17,9 @@
       "Bash(pnpm rebuild:*)",
       "Bash(pnpm remove:*)",
       "Bash(pnpm dlx shadcn@latest init:*)",
-      "Bash(pnpm dlx:*)"
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm test:run:*)",
+      "Bash(pnpm prisma init:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
