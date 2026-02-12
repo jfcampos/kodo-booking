@@ -83,7 +83,7 @@ export function WeeklyCalendar({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="region" aria-label="Weekly calendar">
       {rooms.length > 1 && (
         <RoomTabs
           rooms={rooms}
@@ -96,6 +96,7 @@ export function WeeklyCalendar({
         <Button
           variant="outline"
           size="sm"
+          aria-label="Previous week"
           onClick={() => setCurrentDate(prevWeek(currentDate))}
         >
           Prev
@@ -107,6 +108,7 @@ export function WeeklyCalendar({
         <Button
           variant="outline"
           size="sm"
+          aria-label="Next week"
           onClick={() => setCurrentDate(nextWeek(currentDate))}
         >
           Next

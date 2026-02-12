@@ -1,5 +1,7 @@
 "use client";
 
+import { formatTime } from "@/lib/utils";
+
 type BookingBlockProps = {
   title: string;
   userName: string;
@@ -24,7 +26,8 @@ export function BookingBlock({
   return (
     <button
       onClick={onClick}
-      className={`absolute left-0 right-0 mx-1 rounded px-2 py-1 text-xs overflow-hidden ${
+      aria-label={`${title} by ${userName}, ${formatTime(startTime)}\u2013${formatTime(endTime)}`}
+      className={`absolute left-0 right-0 mx-1 rounded px-2 py-1 text-xs overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         isOwn
           ? "bg-primary text-primary-foreground"
           : "bg-muted text-muted-foreground"
