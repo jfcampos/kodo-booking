@@ -200,3 +200,55 @@ export async function getBlockedRangesForWeek(
     orderBy: { startTime: "asc" },
   });
 }
+
+export async function createRecurringBooking(input: {
+  title: string;
+  notes?: string;
+  roomId: string;
+  startTime: Date;
+  endTime: Date;
+  recurrenceWeeks: number;
+}) {
+  const user = await requireRole(["ADMIN"]);
+  const { recurrenceWeeks, ...bookingInput } = input;
+  const parsed = bookingSchema.parse(bookingInput);
+
+  const recurringId = crypto.randomUUID();
+  const bookings = [];
+
+  for (let week = 0; week < recurrenceWeeks; week++) {
+    const start = new Date(
+      parsed.startTime.getTime() + week * 7 * 24 * 60 * 60 * 1000
+    );
+    const end = new Date(
+      parsed.endTime.getTime() + week * 7 * 24 * 60 * 60 * 1000
+    );
+
+    const conflict = await prisma.booking.findFirst({
+      where: {
+        roomId: parsed.roomId,
+        cancelled: false,
+        startTime: { lt: end },
+        endTime: { gt: start },
+      },
+    });
+
+    if (conflict) {
+      throw new Error(`Conflict on week ${week + 1}: ${start.toISOString()}`);
+    }
+
+    bookings.push({
+      title: parsed.title,
+      notes: parsed.notes,
+      startTime: start,
+      endTime: end,
+      roomId: parsed.roomId,
+      userId: user.id,
+      recurringId,
+    });
+  }
+
+  await prisma.booking.createMany({ data: bookings });
+  revalidatePath("/");
+  return { recurringId, count: bookings.length };
+}
