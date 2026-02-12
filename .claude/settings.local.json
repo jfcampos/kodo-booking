@@ -8,7 +8,16 @@
       "Bash(pnpm create:*)",
       "Bash(timeout 15 pnpm dev:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(pnpm rebuild:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm dlx shadcn@latest init:*)",
+      "Bash(pnpm dlx:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
