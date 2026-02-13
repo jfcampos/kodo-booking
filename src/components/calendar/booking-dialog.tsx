@@ -23,7 +23,8 @@ import {
   cancelBooking,
   editBooking,
 } from "@/lib/actions/bookings";
-import { formatTime } from "@/lib/utils";
+import { formatTime, overlapsAlarmWindow, ALARM_WARNING } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
 
 type BookingDialogProps = {
   mode: "create" | "view";
@@ -256,6 +257,12 @@ export function BookingDialog({
                 </Select>
               </div>
             </div>
+            {resolvedStartTime && resolvedEndTime && overlapsAlarmWindow(resolvedStartTime, resolvedEndTime) && (
+              <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <span className="text-sm">{ALARM_WARNING}</span>
+              </div>
+            )}
             <div>
               <Label>Title</Label>
               <Input name="title" placeholder="Band practice" required />

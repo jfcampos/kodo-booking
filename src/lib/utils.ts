@@ -39,3 +39,19 @@ export function formatTime(date: Date) {
 export function formatDayHeader(date: Date) {
   return format(date, "EEE d");
 }
+
+const ALARM_START = 1; // 1am
+const ALARM_END = 8;   // 8am
+export const ALARM_WARNING = "The security alarm will be armed between 1am and 8am.";
+
+export function overlapsAlarmWindow(start: Date, end: Date): boolean {
+  const startH = start.getHours() + start.getMinutes() / 60;
+  const endH = end.getHours() + end.getMinutes() / 60;
+  const sameDay = start.toDateString() === end.toDateString();
+
+  if (sameDay) {
+    return startH < ALARM_END && endH > ALARM_START;
+  }
+  // Crosses midnight: day 1 [startH,24] or day 2 [0,endH]
+  return startH < ALARM_END || endH > ALARM_START;
+}

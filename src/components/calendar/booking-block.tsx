@@ -1,6 +1,8 @@
 "use client";
 
-import { formatTime } from "@/lib/utils";
+import { useState } from "react";
+import { formatTime, overlapsAlarmWindow, ALARM_WARNING } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
 
 type BookingBlockProps = {
   title: string;
@@ -30,23 +32,51 @@ export function BookingBlock({
   const startHour = displayStart.getHours() + displayStart.getMinutes() / 60;
   const duration =
     (displayEnd.getTime() - displayStart.getTime()) / (1000 * 60 * 60);
+  const hasAlarmWarning = overlapsAlarmWindow(startTime, endTime);
+  const [showWarning, setShowWarning] = useState(false);
 
   return (
-    <button
-      onClick={onClick}
-      aria-label={`${title} by ${userName}, ${formatTime(startTime)}\u2013${formatTime(endTime)}`}
-      className={`absolute left-0 right-0 mx-1 rounded px-2 py-1 text-xs overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        isOwn ? "ring-1 ring-foreground/20" : ""
-      }`}
+    <div
+      className="absolute left-0 right-0 mx-1"
       style={{
         top: `${startHour * remPerHour}rem`,
         height: `${duration * remPerHour}rem`,
-        backgroundColor: userColor,
-        color: "#fff",
       }}
     >
-      <div className="font-medium truncate">{title}</div>
-      <div className="truncate opacity-75">{userName}</div>
-    </button>
+      <button
+        onClick={onClick}
+        aria-label={`${title} by ${userName}, ${formatTime(startTime)}\u2013${formatTime(endTime)}`}
+        className={`h-full w-full rounded px-2 py-1 text-xs overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          isOwn ? "ring-1 ring-foreground/20" : ""
+        }`}
+        style={{
+          backgroundColor: userColor,
+          color: "#fff",
+        }}
+      >
+        <div className="font-medium truncate">{title}</div>
+        <div className="truncate opacity-75">{userName}</div>
+      </button>
+      {hasAlarmWarning && (
+        <div className="absolute top-0.5 right-1 group">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowWarning((v) => !v); }}
+            className="text-yellow-300 hover:text-yellow-100 drop-shadow"
+            aria-label="Security alarm warning"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+          </button>
+          <div className="absolute right-0 top-5 z-20 w-48 rounded bg-yellow-600 px-2 py-1 text-xs text-white shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+            {ALARM_WARNING}
+          </div>
+          {showWarning && (
+            <div className="absolute right-0 top-5 z-20 w-48 rounded bg-yellow-600 px-2 py-1 text-xs text-white shadow-lg">
+              {ALARM_WARNING}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
