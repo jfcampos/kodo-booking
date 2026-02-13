@@ -62,15 +62,15 @@ export function WeeklyCalendar({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [slotHeightRem, setSlotHeightRem] = useState(() => {
     if (typeof window !== "undefined") {
-      return Number(localStorage.getItem("cal-slot-height")) || 4;
+      return Number(localStorage.getItem("cal-slot-height")) || 3;
     }
-    return 4;
+    return 3;
   });
   const [displayGranularity, setDisplayGranularity] = useState(() => {
     if (typeof window !== "undefined") {
-      return Number(localStorage.getItem("cal-resolution")) || 30;
+      return Number(localStorage.getItem("cal-resolution")) || 60;
     }
-    return 30;
+    return 60;
   });
   const [dialogState, setDialogState] = useState<{
     open: boolean;
