@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UserSettingsForm } from "@/components/settings/user-settings-form";
 
@@ -6,10 +6,15 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user) return null;
 
-  const user = await prisma.user.findUniqueOrThrow({
+  const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { name: true, email: true, color: true },
   });
+
+  if (!user) {
+    await signOut({ redirectTo: "/sign-in" });
+    return null;
+  }
 
   return (
     <div className="space-y-6">
