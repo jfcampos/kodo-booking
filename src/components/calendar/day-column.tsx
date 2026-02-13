@@ -17,7 +17,8 @@ type DayColumnProps = {
   date: Date;
   bookings: Booking[];
   currentUserId: string;
-  granularityMinutes: number;
+  displayGranularity: number;
+  slotHeightRem: number;
   onSlotClick: (date: Date, hour: number) => void;
   onBookingClick: (bookingId: string) => void;
 };
@@ -26,19 +27,14 @@ export function DayColumn({
   date,
   bookings,
   currentUserId,
-  granularityMinutes,
+  displayGranularity,
+  slotHeightRem,
   onSlotClick,
   onBookingClick,
 }: DayColumnProps) {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const slotsPerHour = 60 / granularityMinutes;
+  const totalSlots = 24 * (60 / displayGranularity);
   const isToday = new Date().toDateString() === date.toDateString();
-
-  function formatSlotTime(hour: number, slotIdx: number) {
-    const h = Math.floor(hour + (slotIdx * granularityMinutes) / 60);
-    const m = (slotIdx * granularityMinutes) % 60;
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-  }
+  const remPerHour = slotHeightRem * (60 / displayGranularity);
 
   return (
     <div className="flex-1 min-w-[100px]" role="columnheader">
@@ -50,35 +46,30 @@ export function DayColumn({
         {formatDayHeader(date)}
       </div>
       <div className="relative" role="group" aria-label={formatDayHeader(date)}>
-        {hours.map((hour) =>
-          Array.from({ length: slotsPerHour }, (_, slotIdx) => {
-            const slotTime = formatSlotTime(hour, slotIdx);
-            return (
-              <div
-                key={`${hour}-${slotIdx}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Book ${formatDayHeader(date)} at ${slotTime}`}
-                className="h-16 border-b border-r cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() =>
-                  onSlotClick(
-                    date,
-                    hour + (slotIdx * granularityMinutes) / 60
-                  )
+        {Array.from({ length: totalSlots }, (_, i) => {
+          const totalMinutes = i * displayGranularity;
+          const h = Math.floor(totalMinutes / 60);
+          const m = totalMinutes % 60;
+          const slotTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          const hour = totalMinutes / 60;
+          return (
+            <div
+              key={i}
+              role="button"
+              tabIndex={0}
+              aria-label={`Book ${formatDayHeader(date)} at ${slotTime}`}
+              style={{ height: `${slotHeightRem}rem` }}
+              className="border-b border-r cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => onSlotClick(date, hour)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSlotClick(date, hour);
                 }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSlotClick(
-                      date,
-                      hour + (slotIdx * granularityMinutes) / 60
-                    );
-                  }
-                }}
-              />
-            );
-          })
-        )}
+              }}
+            />
+          );
+        })}
         {bookings.map((booking) => (
           <BookingBlock
             key={`${booking.id}-${new Date(booking.displayStart).toISOString()}`}
@@ -89,6 +80,7 @@ export function DayColumn({
             displayStart={new Date(booking.displayStart)}
             displayEnd={new Date(booking.displayEnd)}
             isOwn={booking.user.id === currentUserId}
+            remPerHour={remPerHour}
             onClick={() => onBookingClick(booking.id)}
           />
         ))}

@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RoomTabs } from "./room-tabs";
 import { DayColumn } from "./day-column";
 import { BookingDialog } from "./booking-dialog";
@@ -10,6 +17,20 @@ import {
   getBookingsForWeek,
 } from "@/lib/actions/bookings";
 import { format } from "date-fns";
+
+const SLOT_HEIGHT_OPTIONS = [
+  { value: "2", label: "Compact" },
+  { value: "3", label: "Medium" },
+  { value: "4", label: "Default" },
+  { value: "5", label: "Tall" },
+  { value: "6", label: "Extra tall" },
+];
+
+const RESOLUTION_OPTIONS = [
+  { value: "15", label: "15 min" },
+  { value: "30", label: "30 min" },
+  { value: "60", label: "1 hour" },
+];
 
 type Room = { id: string; name: string };
 type Booking = {
@@ -39,6 +60,18 @@ export function WeeklyCalendar({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id ?? "");
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [slotHeightRem, setSlotHeightRem] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Number(localStorage.getItem("cal-slot-height")) || 4;
+    }
+    return 4;
+  });
+  const [displayGranularity, setDisplayGranularity] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Number(localStorage.getItem("cal-resolution")) || 30;
+    }
+    return 30;
+  });
   const [dialogState, setDialogState] = useState<{
     open: boolean;
     mode: "create" | "view";
@@ -130,17 +163,70 @@ export function WeeklyCalendar({
         </Button>
       </div>
 
+      <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">Resolution:</span>
+          <Select
+            value={String(displayGranularity)}
+            onValueChange={(v) => {
+              const val = Number(v);
+              setDisplayGranularity(val);
+              localStorage.setItem("cal-resolution", v);
+            }}
+          >
+            <SelectTrigger className="w-24 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RESOLUTION_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">Zoom:</span>
+          <Select
+            value={String(slotHeightRem)}
+            onValueChange={(v) => {
+              const val = Number(v);
+              setSlotHeightRem(val);
+              localStorage.setItem("cal-slot-height", v);
+            }}
+          >
+            <SelectTrigger className="w-28 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SLOT_HEIGHT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="flex overflow-x-auto">
         <div className="w-14 flex-shrink-0">
           <div className="h-10 border-b" />
-          {Array.from({ length: 24 }, (_, i) => (
-            <div
-              key={i}
-              className="h-16 pr-2 text-right text-xs text-muted-foreground"
-            >
-              {String(i).padStart(2, "0")}:00
-            </div>
-          ))}
+          {Array.from({ length: 24 * (60 / displayGranularity) }, (_, i) => {
+            const totalMinutes = i * displayGranularity;
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return (
+              <div
+                key={i}
+                style={{ height: `${slotHeightRem}rem` }}
+                className="pr-2 text-right text-xs text-muted-foreground"
+              >
+                {m === 0 ? `${String(h).padStart(2, "0")}:00` : ""}
+              </div>
+            );
+          })}
         </div>
 
         {days.map((day) => (
@@ -149,7 +235,8 @@ export function WeeklyCalendar({
             date={day}
             bookings={getBookingSegmentsForDay(day)}
             currentUserId={currentUserId}
-            granularityMinutes={granularityMinutes}
+            displayGranularity={displayGranularity}
+            slotHeightRem={slotHeightRem}
             onSlotClick={handleSlotClick}
             onBookingClick={handleBookingClick}
           />

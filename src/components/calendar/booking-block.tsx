@@ -10,6 +10,7 @@ type BookingBlockProps = {
   displayStart: Date;
   displayEnd: Date;
   isOwn: boolean;
+  remPerHour: number;
   onClick: () => void;
 };
 
@@ -21,6 +22,7 @@ export function BookingBlock({
   displayStart,
   displayEnd,
   isOwn,
+  remPerHour,
   onClick,
 }: BookingBlockProps) {
   const startHour = displayStart.getHours() + displayStart.getMinutes() / 60;
@@ -37,8 +39,8 @@ export function BookingBlock({
           : "bg-muted text-muted-foreground"
       }`}
       style={{
-        top: `${startHour * 4}rem`,
-        height: `${duration * 4}rem`,
+        top: `${startHour * remPerHour}rem`,
+        height: `${duration * remPerHour}rem`,
       }}
     >
       <div className="font-medium truncate">{title}</div>
