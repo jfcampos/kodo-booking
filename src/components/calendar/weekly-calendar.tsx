@@ -39,7 +39,7 @@ type Booking = {
   notes: string | null;
   startTime: Date;
   endTime: Date;
-  user: { id: string; name: string | null; email: string };
+  user: { id: string; name: string | null; email: string; color: string };
 };
 
 type WeeklyCalendarProps = {

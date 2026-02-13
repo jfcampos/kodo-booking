@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateMyName } from "@/lib/actions/users";
+import { updateMyName, updateMyColor } from "@/lib/actions/users";
 
 export function UserSettingsForm({
   name,
   email,
+  color,
 }: {
   name: string;
   email: string;
+  color: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,7 @@ export function UserSettingsForm({
     setError(null);
     try {
       await updateMyName(formData.get("name") as string);
+      await updateMyColor(formData.get("color") as string);
       setSaved(true);
       router.refresh();
     } catch (err) {
@@ -43,6 +46,20 @@ export function UserSettingsForm({
       <div>
         <Label>Name</Label>
         <Input name="name" defaultValue={name} required maxLength={100} />
+      </div>
+      <div>
+        <Label>Booking Color</Label>
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            name="color"
+            defaultValue={color}
+            className="h-10 w-14 cursor-pointer rounded border bg-transparent p-1"
+          />
+          <span className="text-sm text-muted-foreground">
+            Your bookings will appear in this color
+          </span>
+        </div>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={loading}>

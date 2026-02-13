@@ -21,6 +21,7 @@ model User {
   image         String?
   password      String?
   role          Role      @default(MEMBER)
+  color         String    @default("#6366f1")
   accounts      Account[]
   sessions      Session[]
   bookings      Booking[]

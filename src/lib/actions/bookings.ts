@@ -189,7 +189,7 @@ export async function getBookingsForWeek(
       startTime: { gte: weekStart },
       endTime: { lte: weekEnd },
     },
-    include: { user: { select: { id: true, name: true, email: true } } },
+    include: { user: { select: { id: true, name: true, email: true, color: true } } },
     orderBy: { startTime: "asc" },
   });
 }

@@ -45,3 +45,11 @@ export async function updateMyName(name: string) {
   revalidatePath("/");
   revalidatePath("/settings");
 }
+
+export async function updateMyColor(color: string) {
+  const user = await requireAuth();
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Invalid color");
+  await prisma.user.update({ where: { id: user.id }, data: { color } });
+  revalidatePath("/");
+  revalidatePath("/settings");
+}

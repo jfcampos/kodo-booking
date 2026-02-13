@@ -8,13 +8,13 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id },
-    select: { name: true, email: true },
+    select: { name: true, email: true, color: true },
   });
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
-      <UserSettingsForm name={user.name ?? ""} email={user.email} />
+      <UserSettingsForm name={user.name ?? ""} email={user.email} color={user.color} />
     </div>
   );
 }

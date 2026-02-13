@@ -10,7 +10,7 @@ type Booking = {
   endTime: Date;
   displayStart: Date;
   displayEnd: Date;
-  user: { id: string; name: string | null };
+  user: { id: string; name: string | null; color: string };
 };
 
 type DayColumnProps = {
@@ -80,6 +80,7 @@ export function DayColumn({
             displayStart={new Date(booking.displayStart)}
             displayEnd={new Date(booking.displayEnd)}
             isOwn={booking.user.id === currentUserId}
+            userColor={booking.user.color}
             remPerHour={remPerHour}
             onClick={() => onBookingClick(booking.id)}
           />
