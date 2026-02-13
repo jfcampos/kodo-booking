@@ -4,7 +4,10 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import type { Role } from "@prisma/client";
+
+export const IMPERSONATE_COOKIE = "kodo-impersonate";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as any,
@@ -55,6 +58,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.role = token.role as Role;
         session.user.id = token.id as string;
+
+        // Impersonation: override session with target user if admin
+        if (token.role === "ADMIN") {
+          try {
+            const cookieStore = await cookies();
+            const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
+            if (impersonateId && impersonateId !== token.id) {
+              const target = await prisma.user.findUnique({
+                where: { id: impersonateId },
+                select: { id: true, name: true, email: true, role: true },
+              });
+              if (target) {
+                session.user.id = target.id;
+                session.user.name = target.name;
+                session.user.email = target.email;
+                session.user.role = target.role;
+                (session as any).impersonatedBy = token.id as string;
+              }
+            }
+          } catch {
+            // cookies() may fail in certain contexts; ignore
+          }
+        }
       }
       return session;
     },

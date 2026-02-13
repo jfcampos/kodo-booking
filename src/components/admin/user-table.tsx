@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { changeUserRole, removeUser } from "@/lib/actions/users";
+import { changeUserRole, removeUser, impersonateUser } from "@/lib/actions/users";
 
 type User = {
   id: string;
@@ -96,16 +96,34 @@ export function UserTable({
                 </Select>
               )}
             </TableCell>
-            <TableCell>
+            <TableCell className="space-x-2">
               {user.id !== currentUserId && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleRemove(user.id)}
-                  disabled={loading === user.id}
-                >
-                  Remove
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      setLoading(user.id);
+                      try {
+                        await impersonateUser(user.id);
+                        window.location.href = "/";
+                      } finally {
+                        setLoading(null);
+                      }
+                    }}
+                    disabled={loading === user.id}
+                  >
+                    Impersonate
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemove(user.id)}
+                    disabled={loading === user.id}
+                  >
+                    Remove
+                  </Button>
+                </>
               )}
             </TableCell>
           </TableRow>
