@@ -27,9 +27,9 @@ export async function Header() {
             </Button>
           </Link>
           <ThemeToggle />
-          <span className="text-sm text-muted-foreground">
+          <Link href="/settings" className="text-sm text-muted-foreground hover:underline">
             {session.user.name}
-          </span>
+          </Link>
           <form
             action={async () => {
               "use server";

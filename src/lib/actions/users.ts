@@ -3,13 +3,18 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Role } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+
+async function requireAuth() {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+  return session.user;
+}
 
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized");
-  }
-  return session.user;
+  const user = await requireAuth();
+  if (user.role !== "ADMIN") throw new Error("Unauthorized");
+  return user;
 }
 
 export async function listUsers() {
@@ -30,4 +35,13 @@ export async function removeUser(userId: string) {
   const admin = await requireAdmin();
   if (admin.id === userId) throw new Error("Cannot remove yourself");
   await prisma.user.delete({ where: { id: userId } });
+}
+
+export async function updateMyName(name: string) {
+  const user = await requireAuth();
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.length > 100) throw new Error("Invalid name");
+  await prisma.user.update({ where: { id: user.id }, data: { name: trimmed } });
+  revalidatePath("/");
+  revalidatePath("/settings");
 }
