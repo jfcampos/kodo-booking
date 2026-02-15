@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getTranslations } from "next-intl/server";
 
 export default async function AdminDashboardPage() {
   const [userCount, roomCount, activeBookings] = await Promise.all([
@@ -9,21 +10,23 @@ export default async function AdminDashboardPage() {
     }),
   ]);
 
+  const t = await getTranslations("Admin");
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+      <h1 className="text-2xl font-bold">{t("dashboard")}</h1>
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4">
           <div className="text-2xl font-bold">{userCount}</div>
-          <div className="text-sm text-muted-foreground">Users</div>
+          <div className="text-sm text-muted-foreground">{t("users")}</div>
         </div>
         <div className="rounded-lg border p-4">
           <div className="text-2xl font-bold">{roomCount}</div>
-          <div className="text-sm text-muted-foreground">Active Rooms</div>
+          <div className="text-sm text-muted-foreground">{t("activeRooms")}</div>
         </div>
         <div className="rounded-lg border p-4">
           <div className="text-2xl font-bold">{activeBookings}</div>
-          <div className="text-sm text-muted-foreground">Active Bookings</div>
+          <div className="text-sm text-muted-foreground">{t("activeBookings")}</div>
         </div>
       </div>
     </div>

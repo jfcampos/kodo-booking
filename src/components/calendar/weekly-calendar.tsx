@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,20 +18,6 @@ import {
   getBookingsForWeek,
 } from "@/lib/actions/bookings";
 import { format } from "date-fns";
-
-const SLOT_HEIGHT_OPTIONS = [
-  { value: "2", label: "Compact" },
-  { value: "3", label: "Medium" },
-  { value: "4", label: "Default" },
-  { value: "5", label: "Tall" },
-  { value: "6", label: "Extra tall" },
-];
-
-const RESOLUTION_OPTIONS = [
-  { value: "15", label: "15 min" },
-  { value: "30", label: "30 min" },
-  { value: "60", label: "1 hour" },
-];
 
 type Room = { id: string; name: string };
 type Booking = {
@@ -57,6 +44,7 @@ export function WeeklyCalendar({
   granularityMinutes,
   maxBookingDurationHours,
 }: WeeklyCalendarProps) {
+  const t = useTranslations("Calendar");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id ?? "");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -82,6 +70,20 @@ export function WeeklyCalendar({
 
   const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
   const days = getWeekDays(currentDate);
+
+  const SLOT_HEIGHT_OPTIONS = [
+    { value: "2", label: t("compact") },
+    { value: "3", label: t("medium") },
+    { value: "4", label: t("default") },
+    { value: "5", label: t("tall") },
+    { value: "6", label: t("extraTall") },
+  ];
+
+  const RESOLUTION_OPTIONS = [
+    { value: "15", label: "15 min" },
+    { value: "30", label: "30 min" },
+    { value: "60", label: "1 hora" },
+  ];
 
   const loadBookings = useCallback(async () => {
     if (!selectedRoomId) return;
@@ -131,7 +133,7 @@ export function WeeklyCalendar({
   }
 
   return (
-    <div className="space-y-4" role="region" aria-label="Weekly calendar">
+    <div className="space-y-4" role="region" aria-label={t("title")}>
       {rooms.length > 1 && (
         <RoomTabs
           rooms={rooms}
@@ -144,28 +146,28 @@ export function WeeklyCalendar({
         <Button
           variant="outline"
           size="sm"
-          aria-label="Previous week"
+          aria-label={t("prevWeek")}
           onClick={() => setCurrentDate(prevWeek(currentDate))}
         >
-          Prev
+          {t("prevWeek")}
         </Button>
         <span className="font-medium">
-          {format(weekStart, "MMM d")} &ndash;{" "}
-          {format(weekEnd, "MMM d, yyyy")}
+          {format(weekStart, "d MMM")} &ndash;{" "}
+          {format(weekEnd, "d MMM, yyyy")}
         </span>
         <Button
           variant="outline"
           size="sm"
-          aria-label="Next week"
+          aria-label={t("nextWeek")}
           onClick={() => setCurrentDate(nextWeek(currentDate))}
         >
-          Next
+          {t("nextWeek")}
         </Button>
       </div>
 
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Resolution:</span>
+          <span className="text-muted-foreground">{t("resolution")}</span>
           <Select
             value={String(displayGranularity)}
             onValueChange={(v) => {
@@ -187,7 +189,7 @@ export function WeeklyCalendar({
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Zoom:</span>
+          <span className="text-muted-foreground">{t("zoom")}</span>
           <Select
             value={String(slotHeightRem)}
             onValueChange={(v) => {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,8 @@ export function UserSettingsForm({
   color: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("Settings");
+  const tc = useTranslations("Common");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function UserSettingsForm({
       setSaved(true);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      setError(err instanceof Error ? err.message : tc("failedToSave"));
     } finally {
       setLoading(false);
     }
@@ -40,15 +43,15 @@ export function UserSettingsForm({
   return (
     <form action={handleSubmit} className="max-w-md space-y-4">
       <div>
-        <Label>Email</Label>
+        <Label>{tc("email")}</Label>
         <Input value={email} disabled />
       </div>
       <div>
-        <Label>Name</Label>
+        <Label>{tc("name")}</Label>
         <Input name="name" defaultValue={name} required maxLength={100} />
       </div>
       <div>
-        <Label>Booking Color</Label>
+        <Label>{t("bookingColor")}</Label>
         <div className="flex items-center gap-3">
           <input
             type="color"
@@ -57,15 +60,15 @@ export function UserSettingsForm({
             className="h-10 w-14 cursor-pointer rounded border bg-transparent p-1"
           />
           <span className="text-sm text-muted-foreground">
-            Your bookings will appear in this color
+            {t("colorHint")}
           </span>
         </div>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save"}
+        {loading ? tc("saving") : tc("save")}
       </Button>
-      {saved && <p className="text-sm text-green-600">Saved</p>}
+      {saved && <p className="text-sm text-green-600">{tc("saved")}</p>}
     </form>
   );
 }

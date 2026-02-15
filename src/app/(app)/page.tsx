@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { listRooms } from "@/lib/actions/rooms";
 import { prisma } from "@/lib/prisma";
 import { WeeklyCalendar } from "@/components/calendar/weekly-calendar";
+import { getTranslations } from "next-intl/server";
 
 export default async function HomePage() {
   const session = await auth();
@@ -13,16 +14,19 @@ export default async function HomePage() {
   });
 
   if (rooms.length === 0) {
+    const t = await getTranslations("Calendar");
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p>No rooms available.</p>
+        <p>{t("noRooms")}</p>
         {session.user.role === "ADMIN" && (
           <p>
-            Go to{" "}
-            <a href="/admin/rooms" className="underline">
-              Admin &rarr; Rooms
-            </a>{" "}
-            to add one.
+            {t.rich("noRoomsAdmin", {
+              link: (chunks) => (
+                <a href="/admin/rooms" className="underline">
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         )}
       </div>

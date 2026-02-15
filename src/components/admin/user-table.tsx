@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,8 @@ export function UserTable({
   currentUserId: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("AdminUsers");
+  const tc = useTranslations("Common");
   const [loading, setLoading] = useState<string | null>(null);
 
   async function handleRoleChange(userId: string, role: Role) {
@@ -51,7 +54,7 @@ export function UserTable({
   }
 
   async function handleRemove(userId: string) {
-    if (!confirm("Remove this user?")) return;
+    if (!confirm(t("confirmRemove"))) return;
     setLoading(userId);
     try {
       await removeUser(userId);
@@ -65,10 +68,10 @@ export function UserTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead>{tc("name")}</TableHead>
+          <TableHead>{tc("email")}</TableHead>
+          <TableHead>{tc("role")}</TableHead>
+          <TableHead>{tc("actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -113,7 +116,7 @@ export function UserTable({
                     }}
                     disabled={loading === user.id}
                   >
-                    Impersonate
+                    {t("impersonate")}
                   </Button>
                   <Button
                     variant="destructive"
@@ -121,7 +124,7 @@ export function UserTable({
                     onClick={() => handleRemove(user.id)}
                     disabled={loading === user.id}
                   >
-                    Remove
+                    {t("remove")}
                   </Button>
                 </>
               )}

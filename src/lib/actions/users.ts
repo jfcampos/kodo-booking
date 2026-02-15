@@ -5,20 +5,23 @@ import { auth, IMPERSONATE_COOKIE } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 
 async function requireAuth() {
+  const t = await getTranslations("ServerErrors");
   const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
+  if (!session?.user) throw new Error(t("unauthorized"));
   return session.user;
 }
 
 /** Check real (non-impersonated) admin status via session + impersonatedBy */
 async function requireAdmin() {
+  const t = await getTranslations("ServerErrors");
   const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
+  if (!session?.user) throw new Error(t("unauthorized"));
   // If impersonating, the real user is admin (session callback only sets impersonatedBy for admins)
   if ((session as any).impersonatedBy) return { ...session.user, id: (session as any).impersonatedBy as string };
-  if (session.user.role !== "ADMIN") throw new Error("Unauthorized");
+  if (session.user.role !== "ADMIN") throw new Error(t("unauthorized"));
   return session.user;
 }
 
@@ -31,37 +34,42 @@ export async function listUsers() {
 }
 
 export async function changeUserRole(userId: string, role: Role) {
+  const t = await getTranslations("ServerErrors");
   const admin = await requireAdmin();
-  if (admin.id === userId) throw new Error("Cannot change your own role");
+  if (admin.id === userId) throw new Error(t("cannotChangeOwnRole"));
   await prisma.user.update({ where: { id: userId }, data: { role } });
 }
 
 export async function removeUser(userId: string) {
+  const t = await getTranslations("ServerErrors");
   const admin = await requireAdmin();
-  if (admin.id === userId) throw new Error("Cannot remove yourself");
+  if (admin.id === userId) throw new Error(t("cannotRemoveSelf"));
   await prisma.user.delete({ where: { id: userId } });
 }
 
 export async function updateMyName(name: string) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 100) throw new Error("Invalid name");
+  if (!trimmed || trimmed.length > 100) throw new Error(t("invalidName"));
   await prisma.user.update({ where: { id: user.id }, data: { name: trimmed } });
   revalidatePath("/");
   revalidatePath("/settings");
 }
 
 export async function updateMyColor(color: string) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Invalid color");
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error(t("invalidColor"));
   await prisma.user.update({ where: { id: user.id }, data: { color } });
   revalidatePath("/");
   revalidatePath("/settings");
 }
 
 export async function impersonateUser(userId: string) {
+  const t = await getTranslations("ServerErrors");
   const admin = await requireAdmin();
-  if (userId === admin.id) throw new Error("Cannot impersonate yourself");
+  if (userId === admin.id) throw new Error(t("cannotImpersonateSelf"));
   const target = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const cookieStore = await cookies();
   cookieStore.set(IMPERSONATE_COOKIE, target.id, { httpOnly: true, path: "/" });

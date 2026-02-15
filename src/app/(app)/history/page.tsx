@@ -9,23 +9,26 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { getTranslations } from "next-intl/server";
 
 export default async function HistoryPage() {
   const bookings = await getUserBookingHistory();
+  const t = await getTranslations("History");
+  const tc = await getTranslations("Common");
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">My Booking History</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       {bookings.length === 0 ? (
-        <p className="text-muted-foreground">No bookings yet.</p>
+        <p className="text-muted-foreground">{t("noBookings")}</p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{tc("title")}</TableHead>
+              <TableHead>{tc("room")}</TableHead>
+              <TableHead>{tc("time")}</TableHead>
+              <TableHead>{tc("status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -34,7 +37,7 @@ export default async function HistoryPage() {
                 <TableCell>{b.title}</TableCell>
                 <TableCell>{b.room.name}</TableCell>
                 <TableCell className="text-xs">
-                  {format(new Date(b.startTime), "MMM d HH:mm")} &ndash;{" "}
+                  {format(new Date(b.startTime), "d MMM HH:mm")} &ndash;{" "}
                   {format(new Date(b.endTime), "HH:mm")}
                 </TableCell>
                 <TableCell>
@@ -48,10 +51,10 @@ export default async function HistoryPage() {
                     }
                   >
                     {b.cancelled
-                      ? "Cancelled"
+                      ? t("cancelled")
                       : new Date(b.endTime) < new Date()
-                        ? "Past"
-                        : "Upcoming"}
+                        ? t("past")
+                        : t("upcoming")}
                   </Badge>
                 </TableCell>
               </TableRow>

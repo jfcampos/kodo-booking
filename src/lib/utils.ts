@@ -7,7 +7,11 @@ import {
   subWeeks,
   eachDayOfInterval,
   format,
+  setDefaultOptions,
 } from "date-fns";
+import { es } from "date-fns/locale";
+
+setDefaultOptions({ locale: es });
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,7 +46,6 @@ export function formatDayHeader(date: Date) {
 
 const ALARM_START = 1; // 1am
 const ALARM_END = 8;   // 8am
-export const ALARM_WARNING = "The security alarm will be armed between 1am and 8am.";
 
 export function overlapsAlarmWindow(start: Date, end: Date): boolean {
   const startH = start.getHours() + start.getMinutes() / 60;

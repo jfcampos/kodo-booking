@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations/user";
 import bcrypt from "bcryptjs";
+import { getTranslations } from "next-intl/server";
 
 export async function register(input: {
   name: string;
@@ -10,20 +11,21 @@ export async function register(input: {
   password: string;
   token: string;
 }) {
+  const t = await getTranslations("ServerErrors");
   const parsed = registerSchema.parse(input);
 
   const invite = await prisma.inviteLink.findUnique({
     where: { token: parsed.token },
   });
 
-  if (!invite) throw new Error("Invalid invite link");
-  if (invite.usedAt) throw new Error("Invite link already used");
-  if (invite.expiresAt < new Date()) throw new Error("Invite link expired");
+  if (!invite) throw new Error(t("invalidInvite"));
+  if (invite.usedAt) throw new Error(t("inviteUsed"));
+  if (invite.expiresAt < new Date()) throw new Error(t("inviteExpired"));
 
   const existing = await prisma.user.findUnique({
     where: { email: parsed.email },
   });
-  if (existing) throw new Error("Email already registered");
+  if (existing) throw new Error(t("emailRegistered"));
 
   const hashedPassword = await bcrypt.hash(parsed.password, 10);
 

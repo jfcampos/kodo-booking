@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -27,10 +28,12 @@ type Booking = {
 
 export function BookingTable({ bookings }: { bookings: Booking[] }) {
   const router = useRouter();
+  const t = useTranslations("AdminBookings");
+  const tc = useTranslations("Common");
   const [loading, setLoading] = useState<string | null>(null);
 
   async function handleCancel(id: string) {
-    if (!confirm("Cancel this booking?")) return;
+    if (!confirm(t("confirmCancel"))) return;
     setLoading(id);
     try {
       await adminCancelBooking(id);
@@ -44,12 +47,12 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Room</TableHead>
-          <TableHead>User</TableHead>
-          <TableHead>Time</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead>{tc("title")}</TableHead>
+          <TableHead>{tc("room")}</TableHead>
+          <TableHead>{t("user")}</TableHead>
+          <TableHead>{tc("time")}</TableHead>
+          <TableHead>{tc("status")}</TableHead>
+          <TableHead>{tc("actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -59,7 +62,7 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
             <TableCell>{b.room.name}</TableCell>
             <TableCell>{b.user.name ?? b.user.email}</TableCell>
             <TableCell className="text-xs">
-              {format(new Date(b.startTime), "MMM d HH:mm")} &ndash;{" "}
+              {format(new Date(b.startTime), "d MMM HH:mm")} &ndash;{" "}
               {format(new Date(b.endTime), "HH:mm")}
             </TableCell>
             <TableCell>
@@ -73,10 +76,10 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
                 }
               >
                 {b.cancelled
-                  ? "Cancelled"
+                  ? t("cancelled")
                   : new Date(b.endTime) < new Date()
-                    ? "Past"
-                    : "Active"}
+                    ? t("past")
+                    : t("active")}
               </Badge>
             </TableCell>
             <TableCell>
@@ -87,7 +90,7 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
                   onClick={() => handleCancel(b.id)}
                   disabled={loading === b.id}
                 >
-                  Cancel
+                  {tc("cancel")}
                 </Button>
               )}
             </TableCell>

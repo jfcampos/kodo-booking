@@ -30,7 +30,7 @@ describe("listUsers", () => {
 
   it("rejects non-admin", async () => {
     (auth as any).mockResolvedValue({ user: { id: "2", role: "MEMBER" } });
-    await expect(listUsers()).rejects.toThrow("Unauthorized");
+    await expect(listUsers()).rejects.toThrow("unauthorized");
   });
 });
 
@@ -50,7 +50,7 @@ describe("changeUserRole", () => {
   it("rejects changing own role", async () => {
     (auth as any).mockResolvedValue({ user: { id: "1", role: "ADMIN" } });
     await expect(changeUserRole("1", "MEMBER")).rejects.toThrow(
-      "Cannot change your own role"
+      "cannotChangeOwnRole"
     );
   });
 });
@@ -67,6 +67,6 @@ describe("removeUser", () => {
 
   it("rejects removing yourself", async () => {
     (auth as any).mockResolvedValue({ user: { id: "1", role: "ADMIN" } });
-    await expect(removeUser("1")).rejects.toThrow("Cannot remove yourself");
+    await expect(removeUser("1")).rejects.toThrow("cannotRemoveSelf");
   });
 });

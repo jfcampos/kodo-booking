@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { settingsSchema } from "@/lib/validations/settings";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 
 export async function getSettings() {
   return prisma.appSettings.findUniqueOrThrow({ where: { id: "default" } });
@@ -15,9 +16,10 @@ export async function updateSettings(input: {
   maxActiveBookings: number;
   maxBookingDurationHours: number;
 }) {
+  const t = await getTranslations("ServerErrors");
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN")
-    throw new Error("Unauthorized");
+    throw new Error(t("unauthorized"));
 
   const parsed = settingsSchema.parse(input);
   await prisma.appSettings.update({

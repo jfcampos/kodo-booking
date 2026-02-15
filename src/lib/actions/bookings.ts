@@ -5,16 +5,19 @@ import { auth } from "@/lib/auth";
 import { bookingSchema, editBookingSchema } from "@/lib/validations/booking";
 import { revalidatePath } from "next/cache";
 import { addDays } from "date-fns";
+import { getTranslations } from "next-intl/server";
 
 async function requireAuth() {
+  const t = await getTranslations("ServerErrors");
   const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
+  if (!session?.user) throw new Error(t("unauthorized"));
   return session.user;
 }
 
 async function requireRole(roles: string[]) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
-  if (!roles.includes(user.role)) throw new Error("Unauthorized");
+  if (!roles.includes(user.role)) throw new Error(t("unauthorized"));
   return user;
 }
 
@@ -29,9 +32,10 @@ export async function createBooking(input: {
   startTime: Date;
   endTime: Date;
 }) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
   if (user.role === "VIEWER")
-    throw new Error("Viewers cannot create bookings");
+    throw new Error(t("viewerCannotBook"));
 
   const parsed = bookingSchema.parse(input);
   const settings = await getSettings();
@@ -43,7 +47,7 @@ export async function createBooking(input: {
     parsed.endTime.getTime() % granMs !== 0
   ) {
     throw new Error(
-      `Times must align to ${settings.granularityMinutes}-minute increments`
+      t("timesNotAligned", { minutes: settings.granularityMinutes })
     );
   }
 
@@ -52,7 +56,7 @@ export async function createBooking(input: {
   const maxDurationMs = settings.maxBookingDurationHours * 60 * 60 * 1000;
   if (durationMs > maxDurationMs) {
     throw new Error(
-      `Booking duration cannot exceed ${settings.maxBookingDurationHours} hours`
+      t("maxDurationExceeded", { hours: settings.maxBookingDurationHours })
     );
   }
 
@@ -60,13 +64,13 @@ export async function createBooking(input: {
   const maxDate = addDays(new Date(), settings.maxAdvanceDays);
   if (parsed.startTime > maxDate) {
     throw new Error(
-      `Cannot book more than ${settings.maxAdvanceDays} days in advance`
+      t("tooFarInAdvance", { days: settings.maxAdvanceDays })
     );
   }
 
   // Validate start is in the future
   if (parsed.startTime <= new Date()) {
-    throw new Error("Cannot book in the past");
+    throw new Error(t("cannotBookPast"));
   }
 
   // Check active bookings limit
@@ -79,7 +83,7 @@ export async function createBooking(input: {
   });
   if (activeCount >= settings.maxActiveBookings) {
     throw new Error(
-      `Maximum ${settings.maxActiveBookings} active bookings allowed`
+      t("maxActiveBookings", { count: settings.maxActiveBookings })
     );
   }
 
@@ -93,7 +97,7 @@ export async function createBooking(input: {
     },
   });
   if (conflict)
-    throw new Error("Time slot conflict: another booking overlaps this time");
+    throw new Error(t("timeConflict"));
 
   // Check for blocked time ranges
   const blocked = await prisma.blockedTimeRange.findFirst({
@@ -103,7 +107,7 @@ export async function createBooking(input: {
       endTime: { gt: parsed.startTime },
     },
   });
-  if (blocked) throw new Error("This time range is blocked");
+  if (blocked) throw new Error(t("timeBlocked"));
 
   const booking = await prisma.booking.create({
     data: {
@@ -121,16 +125,17 @@ export async function createBooking(input: {
 }
 
 export async function cancelBooking(bookingId: string) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
   const booking = await prisma.booking.findUniqueOrThrow({
     where: { id: bookingId },
   });
 
   if (booking.userId !== user.id && user.role !== "ADMIN") {
-    throw new Error("Can only cancel your own bookings");
+    throw new Error(t("canOnlyCancelOwn"));
   }
   if (booking.startTime <= new Date()) {
-    throw new Error("Cannot cancel a booking that has already started");
+    throw new Error(t("alreadyStarted"));
   }
 
   await prisma.booking.update({
@@ -145,6 +150,7 @@ export async function editBooking(
   bookingId: string,
   input: { title: string; notes?: string }
 ) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireAuth();
   const parsed = editBookingSchema.parse(input);
   const booking = await prisma.booking.findUniqueOrThrow({
@@ -152,10 +158,10 @@ export async function editBooking(
   });
 
   if (booking.userId !== user.id && user.role !== "ADMIN") {
-    throw new Error("Can only edit your own bookings");
+    throw new Error(t("canOnlyEditOwn"));
   }
   if (booking.startTime <= new Date()) {
-    throw new Error("Cannot edit a past booking");
+    throw new Error(t("cannotEditPast"));
   }
 
   await prisma.booking.update({
@@ -218,6 +224,7 @@ export async function createRecurringBooking(input: {
   endTime: Date;
   recurrenceWeeks: number;
 }) {
+  const t = await getTranslations("ServerErrors");
   const user = await requireRole(["ADMIN"]);
   const { recurrenceWeeks, ...bookingInput } = input;
   const parsed = bookingSchema.parse(bookingInput);
@@ -243,7 +250,7 @@ export async function createRecurringBooking(input: {
     });
 
     if (conflict) {
-      throw new Error(`Conflict on week ${week + 1}: ${start.toISOString()}`);
+      throw new Error(t("recurringConflict", { week: week + 1, date: start.toISOString() }));
     }
 
     bookings.push({

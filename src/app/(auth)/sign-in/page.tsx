@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { getTranslations } from "next-intl/server";
 
 export default async function SignInPage({
   searchParams,
@@ -13,6 +14,8 @@ export default async function SignInPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  const t = await getTranslations("Auth");
+  const tc = await getTranslations("Common");
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -28,13 +31,13 @@ export default async function SignInPage({
             }}
           >
             <Button variant="outline" className="w-full" type="submit">
-              Sign in with Google
+              {t("signInWithGoogle")}
             </Button>
           </form>
 
           <div className="flex items-center gap-2">
             <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("or")}</span>
             <Separator className="flex-1" />
           </div>
 
@@ -49,7 +52,9 @@ export default async function SignInPage({
                 });
               } catch (err) {
                 if (err instanceof AuthError) {
-                  redirect(`/sign-in?error=${encodeURIComponent("Invalid email or password")}`);
+                  const { getTranslations } = await import("next-intl/server");
+                  const t = await getTranslations("Auth");
+                  redirect(`/sign-in?error=${encodeURIComponent(t("invalidCredentials"))}`);
                 }
                 throw err;
               }
@@ -57,18 +62,18 @@ export default async function SignInPage({
             className="space-y-3"
           >
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tc("email")}</Label>
               <Input id="email" name="email" type="email" required />
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{tc("password")}</Label>
               <Input id="password" name="password" type="password" required />
             </div>
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
             <Button className="w-full" type="submit">
-              Sign in
+              {t("signIn")}
             </Button>
           </form>
         </CardContent>

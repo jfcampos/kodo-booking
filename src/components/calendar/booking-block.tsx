@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { formatTime, overlapsAlarmWindow, ALARM_WARNING } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { formatTime, overlapsAlarmWindow } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 
 type BookingBlockProps = {
@@ -29,6 +30,8 @@ export function BookingBlock({
   remPerHour,
   onClick,
 }: BookingBlockProps) {
+  const t = useTranslations("BookingDialog");
+  const tBlock = useTranslations("BookingBlock");
   const startHour = displayStart.getHours() + displayStart.getMinutes() / 60;
   const duration =
     (displayEnd.getTime() - displayStart.getTime()) / (1000 * 60 * 60);
@@ -63,16 +66,16 @@ export function BookingBlock({
             type="button"
             onClick={(e) => { e.stopPropagation(); setShowWarning((v) => !v); }}
             className="text-yellow-300 hover:text-yellow-100 drop-shadow"
-            aria-label="Security alarm warning"
+            aria-label={tBlock("alarmWarningLabel")}
           >
             <AlertTriangle className="h-3.5 w-3.5" />
           </button>
           <div className="absolute right-0 top-5 z-20 w-48 rounded bg-yellow-600 px-2 py-1 text-xs text-white shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
-            {ALARM_WARNING}
+            {t("alarmWarning")}
           </div>
           {showWarning && (
             <div className="absolute right-0 top-5 z-20 w-48 rounded bg-yellow-600 px-2 py-1 text-xs text-white shadow-lg">
-              {ALARM_WARNING}
+              {t("alarmWarning")}
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { BookingTable } from "@/components/admin/booking-table";
+import { getTranslations } from "next-intl/server";
 
 export default async function AdminBookingsPage() {
   const bookings = await prisma.booking.findMany({
@@ -11,9 +12,11 @@ export default async function AdminBookingsPage() {
     take: 100,
   });
 
+  const t = await getTranslations("AdminBookings");
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">All Bookings</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       <BookingTable bookings={bookings} />
     </div>
   );

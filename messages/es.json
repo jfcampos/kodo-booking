@@ -1,0 +1,185 @@
+{
+  "Common": {
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "saved": "Guardado",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "loading": "Cargando...",
+    "name": "Nombre",
+    "email": "Email",
+    "password": "Contrase\u00f1a",
+    "role": "Rol",
+    "actions": "Acciones",
+    "status": "Estado",
+    "title": "T\u00edtulo",
+    "description": "Descripci\u00f3n",
+    "room": "Sala",
+    "time": "Hora",
+    "unknown": "Desconocido",
+    "failedToSave": "Error al guardar"
+  },
+  "Auth": {
+    "signIn": "Iniciar sesi\u00f3n",
+    "signOut": "Cerrar sesi\u00f3n",
+    "signInWithGoogle": "Iniciar sesi\u00f3n con Google",
+    "or": "o",
+    "invalidCredentials": "Email o contrase\u00f1a inv\u00e1lidos",
+    "createAccount": "Crear cuenta",
+    "creating": "Creando...",
+    "registrationFailed": "Error en el registro"
+  },
+  "Header": {
+    "admin": "Admin",
+    "history": "Historial",
+    "impersonating": "Suplantando a {name}",
+    "stopImpersonating": "Detener"
+  },
+  "Theme": {
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "Calendar": {
+    "title": "Calendario semanal",
+    "prevWeek": "Anterior",
+    "nextWeek": "Siguiente",
+    "resolution": "Resoluci\u00f3n:",
+    "zoom": "Zoom:",
+    "compact": "Compacto",
+    "medium": "Medio",
+    "default": "Normal",
+    "tall": "Alto",
+    "extraTall": "Extra alto",
+    "noRooms": "No hay salas disponibles.",
+    "noRoomsAdmin": "Ve a <link>Admin \u2192 Salas</link> para agregar una.",
+"bookSlot": "Reservar {day} a las {time}"
+  },
+  "BookingDialog": {
+    "newBooking": "Nueva reserva",
+    "date": "Fecha",
+    "startTime": "Hora inicio",
+    "endTime": "Hora fin",
+    "selectStartTime": "Seleccionar hora inicio",
+    "selectEndTime": "Seleccionar hora fin",
+    "title": "T\u00edtulo",
+    "titlePlaceholder": "Ensayo de banda",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "Detalles adicionales...",
+    "repeatWeekly": "Repetir semanalmente",
+    "noRepeat": "Sin repetici\u00f3n",
+    "weeks": "{count} semanas",
+    "booking": "Reservando...",
+    "book": "Reservar",
+    "bookedBy": "Reservado por: {name}",
+    "notesLabel": "Notas: {notes}",
+    "saveChanges": "Guardar cambios",
+    "cancelBooking": "Cancelar reserva",
+    "confirmCancel": "\u00bfCancelar esta reserva?",
+    "failedToCreate": "Error al crear la reserva",
+    "failedToCancel": "Error al cancelar",
+    "failedToEdit": "Error al editar",
+    "alarmWarning": "La alarma de seguridad estar\u00e1 activada entre la 1am y las 8am."
+  },
+  "BookingBlock": {
+    "alarmWarningLabel": "Aviso de alarma de seguridad"
+  },
+  "History": {
+    "title": "Mi historial de reservas",
+    "noBookings": "A\u00fan no hay reservas.",
+    "cancelled": "Cancelada",
+    "past": "Pasada",
+    "upcoming": "Pr\u00f3xima"
+  },
+  "Settings": {
+    "title": "Configuraci\u00f3n",
+    "bookingColor": "Color de reserva",
+    "colorHint": "Tus reservas aparecer\u00e1n en este color"
+  },
+  "Admin": {
+    "dashboard": "Panel de control",
+    "users": "Usuarios",
+    "rooms": "Salas",
+    "bookings": "Reservas",
+    "settings": "Configuraci\u00f3n",
+    "activeRooms": "Salas activas",
+    "activeBookings": "Reservas activas"
+  },
+  "AdminUsers": {
+    "title": "Usuarios",
+    "impersonate": "Suplantar",
+    "remove": "Eliminar",
+    "confirmRemove": "\u00bfEliminar este usuario?"
+  },
+  "AdminRooms": {
+    "title": "Salas",
+    "addRoom": "Agregar sala",
+    "editRoom": "Editar sala",
+    "active": "Activa",
+    "disabled": "Deshabilitada",
+    "enable": "Habilitar",
+    "disable": "Deshabilitar"
+  },
+  "AdminBookings": {
+    "title": "Todas las reservas",
+    "user": "Usuario",
+    "cancelled": "Cancelada",
+    "past": "Pasada",
+    "active": "Activa",
+    "confirmCancel": "\u00bfCancelar esta reserva?"
+  },
+  "AdminSettings": {
+    "title": "Configuraci\u00f3n",
+    "granularity": "Granularidad de franja horaria (minutos)",
+    "maxAdvanceDays": "Reserva m\u00e1xima anticipada (d\u00edas)",
+    "maxActiveBookings": "Reservas activas m\u00e1ximas por usuario",
+    "maxDuration": "Duraci\u00f3n m\u00e1xima de reserva (horas)",
+    "saveSettings": "Guardar configuraci\u00f3n"
+  },
+  "InviteDialog": {
+    "generateInvite": "Generar enlace de invitaci\u00f3n",
+    "shareLink": "Comparte este enlace:",
+    "copy": "Copiar",
+    "expiresInDays": "Expira en (d\u00edas)",
+    "generating": "Generando...",
+    "generate": "Generar"
+  },
+  "RoomForm": {
+    "addRoom": "Agregar sala",
+    "editRoom": "Editar sala"
+  },
+  "NotFound": {
+    "title": "404",
+    "message": "P\u00e1gina no encontrada",
+    "goHome": "Ir al inicio"
+  },
+  "Error": {
+    "title": "Algo sali\u00f3 mal",
+    "tryAgain": "Intentar de nuevo"
+  },
+  "ServerErrors": {
+    "unauthorized": "No autorizado",
+    "viewerCannotBook": "Los lectores no pueden crear reservas",
+    "timesNotAligned": "Los horarios deben alinearse a incrementos de {minutes} minutos",
+    "maxDurationExceeded": "La duraci\u00f3n de la reserva no puede exceder {hours} horas",
+    "tooFarInAdvance": "No se puede reservar con m\u00e1s de {days} d\u00edas de anticipaci\u00f3n",
+    "cannotBookPast": "No se puede reservar en el pasado",
+    "maxActiveBookings": "M\u00e1ximo {count} reservas activas permitidas",
+    "timeConflict": "Conflicto de horario: otra reserva se superpone con este horario",
+    "timeBlocked": "Este rango horario est\u00e1 bloqueado",
+    "canOnlyCancelOwn": "Solo puedes cancelar tus propias reservas",
+    "alreadyStarted": "No se puede cancelar una reserva que ya comenz\u00f3",
+    "canOnlyEditOwn": "Solo puedes editar tus propias reservas",
+    "cannotEditPast": "No se puede editar una reserva pasada",
+    "recurringConflict": "Conflicto en la semana {week}: {date}",
+    "invalidInvite": "Enlace de invitaci\u00f3n inv\u00e1lido",
+    "inviteUsed": "Enlace de invitaci\u00f3n ya utilizado",
+    "inviteExpired": "Enlace de invitaci\u00f3n expirado",
+    "emailRegistered": "Email ya registrado",
+    "cannotChangeOwnRole": "No puedes cambiar tu propio rol",
+    "cannotRemoveSelf": "No puedes eliminarte a ti mismo",
+    "invalidName": "Nombre inv\u00e1lido",
+    "invalidColor": "Color inv\u00e1lido",
+    "cannotImpersonateSelf": "No puedes suplantarte a ti mismo"
+  }
+}

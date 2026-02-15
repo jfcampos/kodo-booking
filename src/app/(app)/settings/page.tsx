@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UserSettingsForm } from "@/components/settings/user-settings-form";
+import { getTranslations } from "next-intl/server";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -16,9 +17,11 @@ export default async function SettingsPage() {
     return null;
   }
 
+  const t = await getTranslations("Settings");
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       <UserSettingsForm name={user.name ?? ""} email={user.email} color={user.color} />
     </div>
   );

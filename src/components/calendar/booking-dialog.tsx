@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ import {
   cancelBooking,
   editBooking,
 } from "@/lib/actions/bookings";
-import { formatTime, overlapsAlarmWindow, ALARM_WARNING } from "@/lib/utils";
+import { formatTime, overlapsAlarmWindow } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 
 type BookingDialogProps = {
@@ -58,6 +59,8 @@ export function BookingDialog({
   granularityMinutes,
   maxBookingDurationHours,
 }: BookingDialogProps) {
+  const t = useTranslations("BookingDialog");
+  const tc = useTranslations("Common");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -159,7 +162,7 @@ export function BookingDialog({
       onOpenChange(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create booking"
+        err instanceof Error ? err.message : t("failedToCreate")
       );
     } finally {
       setLoading(false);
@@ -167,13 +170,13 @@ export function BookingDialog({
   }
 
   async function handleCancel() {
-    if (!booking || !confirm("Cancel this booking?")) return;
+    if (!booking || !confirm(t("confirmCancel"))) return;
     setLoading(true);
     try {
       await cancelBooking(booking.id);
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to cancel");
+      setError(err instanceof Error ? err.message : t("failedToCancel"));
     } finally {
       setLoading(false);
     }
@@ -190,7 +193,7 @@ export function BookingDialog({
       });
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to edit");
+      setError(err instanceof Error ? err.message : t("failedToEdit"));
     } finally {
       setLoading(false);
     }
@@ -204,11 +207,11 @@ export function BookingDialog({
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Booking</DialogTitle>
+            <DialogTitle>{t("newBooking")}</DialogTitle>
           </DialogHeader>
           <form action={handleCreate} className="space-y-3">
             <div>
-              <Label>Date</Label>
+              <Label>{t("date")}</Label>
               <Input
                 type="date"
                 value={activeDate}
@@ -221,13 +224,13 @@ export function BookingDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Start Time</Label>
+                <Label>{t("startTime")}</Label>
                 <Select
                   value={selectedStartTime || snappedStartIso}
                   onValueChange={(v) => { setSelectedStartTime(v); setSelectedEndTime(""); }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select start time" />
+                    <SelectValue placeholder={t("selectStartTime")} />
                   </SelectTrigger>
                   <SelectContent>
                     {startTimeOptions.map((opt) => (
@@ -239,13 +242,13 @@ export function BookingDialog({
                 </Select>
               </div>
               <div>
-                <Label>End Time</Label>
+                <Label>{t("endTime")}</Label>
                 <Select
                   value={selectedEndTime || endTimeOptions[defaultEndTimeIndex]?.value || ""}
                   onValueChange={setSelectedEndTime}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select end time" />
+                    <SelectValue placeholder={t("selectEndTime")} />
                   </SelectTrigger>
                   <SelectContent>
                     {endTimeOptions.map((opt) => (
@@ -260,29 +263,29 @@ export function BookingDialog({
             {resolvedStartTime && resolvedEndTime && overlapsAlarmWindow(resolvedStartTime, resolvedEndTime) && (
               <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm">{ALARM_WARNING}</span>
+                <span className="text-sm">{t("alarmWarning")}</span>
               </div>
             )}
             <div>
-              <Label>Title</Label>
-              <Input name="title" placeholder="Band practice" required />
+              <Label>{t("title")}</Label>
+              <Input name="title" placeholder={t("titlePlaceholder")} required />
             </div>
             <div>
-              <Label>Notes (optional)</Label>
-              <Input name="notes" placeholder="Any details..." />
+              <Label>{t("notes")}</Label>
+              <Input name="notes" placeholder={t("notesPlaceholder")} />
             </div>
             {isAdmin && (
               <div>
-                <Label>Repeat Weekly</Label>
+                <Label>{t("repeatWeekly")}</Label>
                 <Select value={recurrenceWeeks} onValueChange={setRecurrenceWeeks}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">No repeat</SelectItem>
+                    <SelectItem value="0">{t("noRepeat")}</SelectItem>
                     {Array.from({ length: 12 }, (_, i) => (
                       <SelectItem key={i + 2} value={String(i + 2)}>
-                        {i + 2} weeks
+                        {t("weeks", { count: i + 2 })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -291,7 +294,7 @@ export function BookingDialog({
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Booking..." : "Book"}
+              {loading ? t("booking") : t("book")}
             </Button>
           </form>
         </DialogContent>
@@ -310,17 +313,17 @@ export function BookingDialog({
             {booking && formatTime(new Date(booking.startTime))} &ndash;{" "}
             {booking && formatTime(new Date(booking.endTime))}
           </p>
-          <p>Booked by: {booking?.user.name ?? "Unknown"}</p>
-          {booking?.notes && <p>Notes: {booking.notes}</p>}
+          <p>{t("bookedBy", { name: booking?.user.name ?? tc("unknown") })}</p>
+          {booking?.notes && <p>{t("notesLabel", { notes: booking.notes })}</p>}
         </div>
         {canEdit && (
           <form action={handleEdit} className="space-y-3 border-t pt-3">
             <div>
-              <Label>Title</Label>
+              <Label>{t("title")}</Label>
               <Input name="title" defaultValue={booking?.title} required />
             </div>
             <div>
-              <Label>Notes</Label>
+              <Label>{tc("description")}</Label>
               <Input name="notes" defaultValue={booking?.notes ?? ""} />
             </div>
             <Button
@@ -329,7 +332,7 @@ export function BookingDialog({
               variant="outline"
               className="w-full"
             >
-              Save Changes
+              {t("saveChanges")}
             </Button>
           </form>
         )}
@@ -341,7 +344,7 @@ export function BookingDialog({
             disabled={loading}
             className="w-full"
           >
-            Cancel Booking
+            {t("cancelBooking")}
           </Button>
         )}
       </DialogContent>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +25,8 @@ export function RoomFormDialog({
   trigger: React.ReactNode;
 }) {
   const router = useRouter();
+  const t = useTranslations("RoomForm");
+  const tc = useTranslations("Common");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const isEdit = !!room;
@@ -52,22 +55,22 @@ export function RoomFormDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Room" : "Add Room"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("editRoom") : t("addRoom")}</DialogTitle>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-3">
           <div>
-            <Label>Name</Label>
+            <Label>{tc("name")}</Label>
             <Input name="name" defaultValue={room?.name ?? ""} required />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{tc("description")}</Label>
             <Input
               name="description"
               defaultValue={room?.description ?? ""}
             />
           </div>
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save"}
+            {loading ? tc("saving") : tc("save")}
           </Button>
         </form>
       </DialogContent>

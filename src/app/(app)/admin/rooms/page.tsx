@@ -10,23 +10,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 
 export default async function AdminRoomsPage() {
   const rooms = await listRooms(true);
+  const t = await getTranslations("AdminRooms");
+  const tc = await getTranslations("Common");
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Rooms</h1>
-        <RoomFormDialog trigger={<Button>Add Room</Button>} />
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <RoomFormDialog trigger={<Button>{t("addRoom")}</Button>} />
       </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{tc("name")}</TableHead>
+            <TableHead>{tc("description")}</TableHead>
+            <TableHead>{tc("status")}</TableHead>
+            <TableHead>{tc("actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -36,7 +39,7 @@ export default async function AdminRoomsPage() {
               <TableCell>{room.description ?? "\u2014"}</TableCell>
               <TableCell>
                 <Badge variant={room.disabled ? "secondary" : "default"}>
-                  {room.disabled ? "Disabled" : "Active"}
+                  {room.disabled ? t("disabled") : t("active")}
                 </Badge>
               </TableCell>
               <TableCell className="flex gap-2">
@@ -44,7 +47,7 @@ export default async function AdminRoomsPage() {
                   room={room}
                   trigger={
                     <Button variant="outline" size="sm">
-                      Edit
+                      {tc("edit")}
                     </Button>
                   }
                 />
@@ -55,7 +58,7 @@ export default async function AdminRoomsPage() {
                   }}
                 >
                   <Button variant="outline" size="sm" type="submit">
-                    {room.disabled ? "Enable" : "Disable"}
+                    {room.disabled ? t("enable") : t("disable")}
                   </Button>
                 </form>
               </TableCell>

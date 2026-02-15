@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { createInviteLink } from "@/lib/actions/invites";
 
 export function InviteDialog() {
+  const t = useTranslations("InviteDialog");
+  const tc = useTranslations("Common");
   const [open, setOpen] = useState(false);
   const [link, setLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,15 +51,15 @@ export function InviteDialog() {
       }}
     >
       <DialogTrigger asChild>
-        <Button>Generate Invite Link</Button>
+        <Button>{t("generateInvite")}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Generate Invite Link</DialogTitle>
+          <DialogTitle>{t("generateInvite")}</DialogTitle>
         </DialogHeader>
         {link ? (
           <div className="space-y-2">
-            <Label>Share this link:</Label>
+            <Label>{t("shareLink")}</Label>
             <Input
               value={link}
               readOnly
@@ -66,13 +69,13 @@ export function InviteDialog() {
               variant="outline"
               onClick={() => navigator.clipboard.writeText(link)}
             >
-              Copy
+              {t("copy")}
             </Button>
           </div>
         ) : (
           <form action={handleCreate} className="space-y-3">
             <div>
-              <Label>Role</Label>
+              <Label>{tc("role")}</Label>
               <Select name="role" defaultValue="MEMBER">
                 <SelectTrigger>
                   <SelectValue />
@@ -84,7 +87,7 @@ export function InviteDialog() {
               </Select>
             </div>
             <div>
-              <Label>Expires in (days)</Label>
+              <Label>{t("expiresInDays")}</Label>
               <Input
                 name="expiresInDays"
                 type="number"
@@ -94,7 +97,7 @@ export function InviteDialog() {
               />
             </div>
             <Button type="submit" disabled={loading}>
-              {loading ? "Generating..." : "Generate"}
+              {loading ? t("generating") : t("generate")}
             </Button>
           </form>
         )}

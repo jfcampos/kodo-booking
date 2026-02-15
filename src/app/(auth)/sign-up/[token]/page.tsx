@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,8 @@ import { register } from "@/lib/actions/auth";
 export default function SignUpPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
+  const t = useTranslations("Auth");
+  const tc = useTranslations("Common");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +32,7 @@ export default function SignUpPage() {
       });
       router.push("/sign-in");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : t("registrationFailed"));
     } finally {
       setLoading(false);
     }
@@ -39,20 +42,20 @@ export default function SignUpPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Create Account</CardTitle>
+          <CardTitle className="text-center text-2xl">{t("createAccount")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{tc("name")}</Label>
               <Input id="name" name="name" required />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tc("email")}</Label>
               <Input id="email" name="email" type="email" required />
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{tc("password")}</Label>
               <Input
                 id="password"
                 name="password"
@@ -63,7 +66,7 @@ export default function SignUpPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Account"}
+              {loading ? t("creating") : t("createAccount")}
             </Button>
           </form>
         </CardContent>

@@ -38,6 +38,7 @@ const defaultSettings = {
   granularityMinutes: 30,
   maxAdvanceDays: 14,
   maxActiveBookings: 3,
+  maxBookingDurationHours: 8,
 };
 
 // Helper: create a future date aligned to 30-min granularity, N days from now
@@ -74,7 +75,7 @@ describe("createBooking", () => {
         startTime: start,
         endTime: end,
       })
-    ).rejects.toThrow("conflict");
+    ).rejects.toThrow("timeConflict");
   });
 
   it("creates booking when no conflict exists", async () => {
@@ -110,7 +111,7 @@ describe("createBooking", () => {
         startTime: futureSlot(2, 10),
         endTime: futureSlot(2, 11),
       })
-    ).rejects.toThrow("Viewers cannot create bookings");
+    ).rejects.toThrow("viewerCannotBook");
   });
 
   it("rejects when blocked time range exists", async () => {
@@ -126,7 +127,7 @@ describe("createBooking", () => {
         startTime: futureSlot(2, 10),
         endTime: futureSlot(2, 11),
       })
-    ).rejects.toThrow("blocked");
+    ).rejects.toThrow("timeBlocked");
   });
 
   it("rejects when max active bookings reached", async () => {
@@ -140,7 +141,7 @@ describe("createBooking", () => {
         startTime: futureSlot(2, 10),
         endTime: futureSlot(2, 11),
       })
-    ).rejects.toThrow("Maximum");
+    ).rejects.toThrow("maxActiveBookings");
   });
 });
 
@@ -175,7 +176,7 @@ describe("cancelBooking", () => {
       startTime: new Date(Date.now() + 86400000),
     });
 
-    await expect(cancelBooking("b2")).rejects.toThrow("own bookings");
+    await expect(cancelBooking("b2")).rejects.toThrow("canOnlyCancelOwn");
   });
 });
 

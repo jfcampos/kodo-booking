@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,8 @@ type Settings = {
 
 export function SettingsForm({ settings }: { settings: Settings }) {
   const router = useRouter();
+  const t = useTranslations("AdminSettings");
+  const tc = useTranslations("Common");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -39,7 +42,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
   return (
     <form action={handleSubmit} className="max-w-md space-y-4">
       <div>
-        <Label>Time Slot Granularity (minutes)</Label>
+        <Label>{t("granularity")}</Label>
         <Input
           name="granularityMinutes"
           type="number"
@@ -49,7 +52,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         />
       </div>
       <div>
-        <Label>Max Advance Booking (days)</Label>
+        <Label>{t("maxAdvanceDays")}</Label>
         <Input
           name="maxAdvanceDays"
           type="number"
@@ -59,7 +62,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         />
       </div>
       <div>
-        <Label>Max Active Bookings Per User</Label>
+        <Label>{t("maxActiveBookings")}</Label>
         <Input
           name="maxActiveBookings"
           type="number"
@@ -69,7 +72,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         />
       </div>
       <div>
-        <Label>Max Booking Duration (hours)</Label>
+        <Label>{t("maxDuration")}</Label>
         <Input
           name="maxBookingDurationHours"
           type="number"
@@ -79,9 +82,9 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         />
       </div>
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save Settings"}
+        {loading ? tc("saving") : t("saveSettings")}
       </Button>
-      {saved && <p className="text-sm text-green-600">Saved</p>}
+      {saved && <p className="text-sm text-green-600">{tc("saved")}</p>}
     </form>
   );
 }
