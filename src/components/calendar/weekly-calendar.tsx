@@ -3,13 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { RoomTabs } from "./room-tabs";
 import { DayColumn } from "./day-column";
 import { BookingDialog } from "./booking-dialog";
@@ -72,23 +65,22 @@ export function WeeklyCalendar({
     booking?: Booking;
   }>({ open: false, mode: "create" });
 
+  // Sync settings from header CalendarSettings popover
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === "cal-resolution" && e.newValue) {
+        setDisplayGranularity(Number(e.newValue));
+      }
+      if (e.key === "cal-slot-height" && e.newValue) {
+        setSlotHeightRem(Number(e.newValue));
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
   const days = getWeekDays(currentDate);
-
-  const SLOT_HEIGHT_OPTIONS = [
-    { value: "2", label: t("compact") },
-    { value: "3", label: t("medium") },
-    { value: "4", label: t("default") },
-    { value: "5", label: t("tall") },
-    { value: "6", label: t("extraTall") },
-  ];
-
-  const RESOLUTION_OPTIONS = [
-    { value: "15", label: "15 min" },
-    { value: "30", label: "30 min" },
-    { value: "60", label: "1 hora" },
-  ];
 
   const loadBookings = useCallback(async () => {
     if (!selectedRoomId) return;
@@ -172,53 +164,6 @@ export function WeeklyCalendar({
         >
           {t("nextWeek")}
         </Button>
-      </div>
-
-      <div className="flex items-center gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{t("resolution")}</span>
-          <Select
-            value={String(displayGranularity)}
-            onValueChange={(v) => {
-              const val = Number(v);
-              setDisplayGranularity(val);
-              localStorage.setItem("cal-resolution", v);
-            }}
-          >
-            <SelectTrigger className="w-24 h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RESOLUTION_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{t("zoom")}</span>
-          <Select
-            value={String(slotHeightRem)}
-            onValueChange={(v) => {
-              const val = Number(v);
-              setSlotHeightRem(val);
-              localStorage.setItem("cal-slot-height", v);
-            }}
-          >
-            <SelectTrigger className="w-28 h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SLOT_HEIGHT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <div className="flex">

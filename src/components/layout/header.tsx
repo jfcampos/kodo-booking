@@ -2,7 +2,7 @@ import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stopImpersonating } from "@/lib/actions/users";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { CalendarSettings } from "@/components/layout/calendar-settings";
 import { UserMenu } from "@/components/layout/user-menu";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -41,8 +41,8 @@ export async function Header() {
           <Link href="/" className="font-semibold">
             Kodo Booking
           </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <CalendarSettings />
             <UserMenu
               name={session.user.name ?? null}
               email={session.user.email ?? null}
