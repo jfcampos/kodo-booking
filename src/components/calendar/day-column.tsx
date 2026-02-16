@@ -1,7 +1,7 @@
 "use client";
 
 import { BookingBlock } from "./booking-block";
-import { formatDayHeader, formatDayHeaderShort } from "@/lib/utils";
+import { formatDayHeader, formatDayHeaderShortParts } from "@/lib/utils";
 
 type Booking = {
   id: string;
@@ -40,14 +40,33 @@ export function DayColumn({
   return (
     <div className="flex-1 min-w-0" role="columnheader">
       <div
-        className={`sticky top-0 z-10 h-8 sm:h-10 flex items-center justify-center border-b bg-background px-0.5 text-xs sm:text-sm font-medium ${
-          isToday ? "text-primary" : ""
+        className={`sticky top-0 z-10 h-10 sm:h-10 flex items-center justify-center border-b px-0.5 text-xs sm:text-sm font-medium ${
+          isToday ? "bg-primary/5" : "bg-background"
         }`}
       >
-        <span className="sm:hidden">{formatDayHeaderShort(date)}</span>
-        <span className="hidden sm:inline">{formatDayHeader(date)}</span>
+        {isToday ? (
+          <>
+            <span className="sm:hidden flex flex-col items-center leading-tight text-[10px] font-semibold text-primary">
+              <span>{formatDayHeaderShortParts(date).day}</span>
+              <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary text-primary-foreground">
+                {formatDayHeaderShortParts(date).num}
+              </span>
+            </span>
+            <span className="hidden sm:inline-flex sm:items-center sm:justify-center sm:rounded-full sm:bg-primary sm:text-primary-foreground sm:px-2.5 sm:py-0.5 sm:text-sm sm:font-semibold">
+              {formatDayHeader(date)}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="sm:hidden flex flex-col items-center leading-tight text-[10px]">
+              <span>{formatDayHeaderShortParts(date).day}</span>
+              <span>{formatDayHeaderShortParts(date).num}</span>
+            </span>
+            <span className="hidden sm:inline">{formatDayHeader(date)}</span>
+          </>
+        )}
       </div>
-      <div className="relative" role="group" aria-label={formatDayHeader(date)}>
+      <div className={`relative ${isToday ? "bg-primary/5" : ""}`} role="group" aria-label={formatDayHeader(date)}>
         {Array.from({ length: totalSlots }, (_, i) => {
           const totalMinutes = i * displayGranularity;
           const h = Math.floor(totalMinutes / 60);

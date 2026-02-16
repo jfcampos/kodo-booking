@@ -168,7 +168,7 @@ export function WeeklyCalendar({
 
       <div className="flex">
         <div className="w-9 sm:w-14 flex-shrink-0">
-          <div className="h-8 sm:h-10 border-b" />
+          <div className="h-10 border-b" />
           {Array.from({ length: 24 * (60 / displayGranularity) }, (_, i) => {
             const totalMinutes = i * displayGranularity;
             const h = Math.floor(totalMinutes / 60);

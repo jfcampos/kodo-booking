@@ -40,12 +40,16 @@ export function formatTime(date: Date) {
   return format(date, "HH:mm");
 }
 
-export function formatDayHeader(date: Date) {
-  return format(date, "EEE d");
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function formatDayHeaderShort(date: Date) {
-  return format(date, "EEEEE d");
+export function formatDayHeader(date: Date) {
+  return capitalize(format(date, "EEE d"));
+}
+
+export function formatDayHeaderShortParts(date: Date) {
+  return { day: capitalize(format(date, "EEEEE")), num: format(date, "d") };
 }
 
 const ALARM_START = 1; // 1am
