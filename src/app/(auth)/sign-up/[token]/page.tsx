@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { register } from "@/lib/actions/auth";
+import { Separator } from "@/components/ui/separator";
+import { register, googleSignUpWithInvite } from "@/lib/actions/auth";
 
 export default function SignUpPage() {
   const { token } = useParams<{ token: string }>();
@@ -44,7 +45,27 @@ export default function SignUpPage() {
         <CardHeader>
           <CardTitle className="text-center text-2xl">{t("createAccount")}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <form
+            action={async () => {
+              try {
+                await googleSignUpWithInvite(token);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : t("registrationFailed"));
+              }
+            }}
+          >
+            <Button variant="outline" className="w-full" type="submit">
+              {t("signUpWithGoogle")}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-2">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">{t("or")}</span>
+            <Separator className="flex-1" />
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <Label htmlFor="name">{tc("name")}</Label>

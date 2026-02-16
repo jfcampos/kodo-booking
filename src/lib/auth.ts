@@ -47,6 +47,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const existing = await prisma.user.findUnique({
+          where: { email: user.email! },
+        });
+        if (existing) return true;
+
+        // New Google user — require a valid invite token cookie
+        try {
+          const cookieStore = await cookies();
+          const inviteToken = cookieStore.get("kodo-invite-token")?.value;
+          if (!inviteToken) return false;
+
+          const invite = await prisma.inviteLink.findUnique({
+            where: { token: inviteToken },
+          });
+          if (!invite || invite.usedAt || invite.expiresAt < new Date()) {
+            return false;
+          }
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role: Role }).role;
@@ -94,6 +120,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id! },
           data: { role: "ADMIN" },
         });
+        return;
+      }
+
+      // Assign role from invite token if present
+      try {
+        const cookieStore = await cookies();
+        const inviteToken = cookieStore.get("kodo-invite-token")?.value;
+        if (inviteToken) {
+          const invite = await prisma.inviteLink.findUnique({
+            where: { token: inviteToken },
+          });
+          if (invite && !invite.usedAt && invite.expiresAt >= new Date()) {
+            await prisma.user.update({
+              where: { id: user.id! },
+              data: { role: invite.role },
+            });
+            await prisma.inviteLink.update({
+              where: { id: invite.id },
+              data: { usedAt: new Date(), usedById: user.id! },
+            });
+          }
+          cookieStore.delete("kodo-invite-token");
+        }
+      } catch {
+        // cookies() may fail in certain contexts
       }
     },
   },
