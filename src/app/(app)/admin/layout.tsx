@@ -1,12 +1,19 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
+import { auth } from "@/lib/auth";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    redirect("/");
+  }
+
   const t = await getTranslations("Admin");
 
   const adminLinks = [
