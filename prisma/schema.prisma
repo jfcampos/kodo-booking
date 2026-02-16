@@ -24,9 +24,10 @@ model User {
   color         String    @default("#6366f1")
   accounts      Account[]
   sessions      Session[]
-  bookings      Booking[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  bookings           Booking[]
+  recurringBookings  RecurringBooking[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Account {
@@ -69,10 +70,11 @@ model Room {
   name              String
   description       String?
   disabled          Boolean            @default(false)
-  bookings          Booking[]
-  blockedTimeRanges BlockedTimeRange[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  bookings           Booking[]
+  blockedTimeRanges  BlockedTimeRange[]
+  recurringBookings  RecurringBooking[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }
 
 model Booking {
@@ -85,14 +87,12 @@ model Booking {
   room        Room     @relation(fields: [roomId], references: [id])
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  recurringId String?
   cancelled   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([roomId, startTime, endTime])
   @@index([userId])
-  @@index([recurringId])
 }
 
 model BlockedTimeRange {
@@ -123,4 +123,24 @@ model AppSettings {
   maxAdvanceDays           Int    @default(14)
   maxActiveBookings        Int    @default(3)
   maxBookingDurationHours  Int    @default(4)
+}
+
+model RecurringBooking {
+  id             String   @id @default(cuid())
+  title          String
+  notes          String?
+  dayOfWeek      Int      // 0=Sun..6=Sat
+  startMinutes   Int      // minutes from midnight
+  endMinutes     Int      // minutes from midnight
+  roomId         String
+  room           Room     @relation(fields: [roomId], references: [id])
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  cancelled      Boolean  @default(false)
+  exceptionDates Json     @default("[]") // ["YYYY-MM-DD", ...] for skipped dates
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([roomId, dayOfWeek])
+  @@index([userId])
 }

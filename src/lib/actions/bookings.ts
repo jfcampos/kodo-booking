@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { bookingSchema, editBookingSchema } from "@/lib/validations/booking";
+import { bookingSchema, editBookingSchema, recurringBookingSchema } from "@/lib/validations/booking";
 import { revalidatePath } from "next/cache";
 import { addDays } from "date-fns";
 import { getTranslations } from "next-intl/server";
@@ -108,6 +108,27 @@ export async function createBooking(input: {
     },
   });
   if (blocked) throw new Error(t("timeBlocked"));
+
+  // Check for recurring booking conflicts
+  const bookingDayOfWeek = parsed.startTime.getDay();
+  const bookingStartMin = parsed.startTime.getHours() * 60 + parsed.startTime.getMinutes();
+  const bookingEndMin = parsed.endTime.getHours() * 60 + parsed.endTime.getMinutes();
+  const bookingDateStr = parsed.startTime.toISOString().slice(0, 10);
+
+  const recurringConflicts = await prisma.recurringBooking.findMany({
+    where: {
+      roomId: parsed.roomId,
+      cancelled: false,
+      dayOfWeek: bookingDayOfWeek,
+      startMinutes: { lt: bookingEndMin },
+      endMinutes: { gt: bookingStartMin },
+    },
+  });
+  const hasRecurringConflict = recurringConflicts.some((rb) => {
+    const exceptions = rb.exceptionDates as string[];
+    return !exceptions.includes(bookingDateStr);
+  });
+  if (hasRecurringConflict) throw new Error(t("timeConflict"));
 
   const booking = await prisma.booking.create({
     data: {
@@ -220,53 +241,126 @@ export async function createRecurringBooking(input: {
   title: string;
   notes?: string;
   roomId: string;
-  startTime: Date;
-  endTime: Date;
-  recurrenceWeeks: number;
+  dayOfWeek: number;
+  startMinutes: number;
+  endMinutes: number;
 }) {
   const t = await getTranslations("ServerErrors");
   const user = await requireRole(["ADMIN"]);
-  const { recurrenceWeeks, ...bookingInput } = input;
-  const parsed = bookingSchema.parse(bookingInput);
+  const parsed = recurringBookingSchema.parse(input);
 
-  const recurringId = crypto.randomUUID();
-  const bookings = [];
+  // Check for conflicts with other recurring bookings on same room/day/time
+  const conflict = await prisma.recurringBooking.findFirst({
+    where: {
+      roomId: parsed.roomId,
+      cancelled: false,
+      dayOfWeek: parsed.dayOfWeek,
+      startMinutes: { lt: parsed.endMinutes },
+      endMinutes: { gt: parsed.startMinutes },
+    },
+  });
+  if (conflict) throw new Error(t("recurringConflict"));
 
-  for (let week = 0; week < recurrenceWeeks; week++) {
-    const start = new Date(
-      parsed.startTime.getTime() + week * 7 * 24 * 60 * 60 * 1000
-    );
-    const end = new Date(
-      parsed.endTime.getTime() + week * 7 * 24 * 60 * 60 * 1000
-    );
-
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        roomId: parsed.roomId,
-        cancelled: false,
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
-
-    if (conflict) {
-      throw new Error(t("recurringConflict", { week: week + 1, date: start.toISOString() }));
-    }
-
-    bookings.push({
+  const recurring = await prisma.recurringBooking.create({
+    data: {
       title: parsed.title,
       notes: parsed.notes,
-      startTime: start,
-      endTime: end,
+      dayOfWeek: parsed.dayOfWeek,
+      startMinutes: parsed.startMinutes,
+      endMinutes: parsed.endMinutes,
       roomId: parsed.roomId,
       userId: user.id,
-      recurringId,
-    });
+    },
+  });
+
+  revalidatePath("/");
+  return recurring;
+}
+
+export async function getRecurringBookingsForWeek(
+  roomId: string,
+  weekStart: Date,
+  weekEnd: Date
+) {
+  await requireAuth();
+
+  const actives = await prisma.recurringBooking.findMany({
+    where: { roomId, cancelled: false },
+    include: { user: { select: { id: true, name: true, email: true, color: true } } },
+  });
+
+  // Generate virtual occurrences for each day in the week
+  const occurrences: Array<{
+    id: string;
+    recurringBookingId: string;
+    title: string;
+    notes: string | null;
+    startTime: Date;
+    endTime: Date;
+    isRecurring: true;
+    occurrenceDate: string;
+    user: { id: string; name: string | null; email: string; color: string };
+  }> = [];
+
+  const current = new Date(weekStart);
+  while (current < weekEnd) {
+    const dow = current.getDay();
+    const dateStr = current.toISOString().slice(0, 10);
+
+    for (const rb of actives) {
+      if (rb.dayOfWeek !== dow) continue;
+      const exceptions = rb.exceptionDates as string[];
+      if (exceptions.includes(dateStr)) continue;
+
+      const start = new Date(current);
+      start.setHours(Math.floor(rb.startMinutes / 60), rb.startMinutes % 60, 0, 0);
+      const end = new Date(current);
+      end.setHours(Math.floor(rb.endMinutes / 60), rb.endMinutes % 60, 0, 0);
+
+      occurrences.push({
+        id: `recurring-${rb.id}-${dateStr}`,
+        recurringBookingId: rb.id,
+        title: rb.title,
+        notes: rb.notes,
+        startTime: start,
+        endTime: end,
+        isRecurring: true,
+        occurrenceDate: dateStr,
+        user: rb.user,
+      });
+    }
+
+    current.setDate(current.getDate() + 1);
   }
 
-  await prisma.booking.createMany({ data: bookings });
+  return occurrences;
+}
+
+export async function cancelRecurringOccurrence(id: string, dateStr: string) {
+  const t = await getTranslations("ServerErrors");
+  await requireRole(["ADMIN"]);
+
+  const rb = await prisma.recurringBooking.findUniqueOrThrow({ where: { id } });
+  const exceptions = rb.exceptionDates as string[];
+  if (exceptions.includes(dateStr)) return;
+
+  await prisma.recurringBooking.update({
+    where: { id },
+    data: { exceptionDates: [...exceptions, dateStr] },
+  });
+
   revalidatePath("/");
-  return { recurringId, count: bookings.length };
+}
+
+export async function cancelRecurringSeries(id: string) {
+  await requireRole(["ADMIN"]);
+
+  await prisma.recurringBooking.update({
+    where: { id },
+    data: { cancelled: true },
+  });
+
+  revalidatePath("/");
 }
 
 export async function getUserBookingHistory() {

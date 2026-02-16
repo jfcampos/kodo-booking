@@ -23,9 +23,12 @@ import {
   createRecurringBooking,
   cancelBooking,
   editBooking,
+  cancelRecurringOccurrence,
+  cancelRecurringSeries,
 } from "@/lib/actions/bookings";
 import { formatTime, overlapsAlarmWindow } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Repeat } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type BookingDialogProps = {
   mode: "create" | "view";
@@ -40,6 +43,9 @@ type BookingDialogProps = {
     startTime: Date;
     endTime: Date;
     user: { id: string; name: string | null };
+    isRecurring?: boolean;
+    recurringBookingId?: string;
+    occurrenceDate?: string;
   };
   currentUserId: string;
   currentUserRole: string;
@@ -66,7 +72,7 @@ export function BookingDialog({
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedStartTime, setSelectedStartTime] = useState<string>("");
   const [selectedEndTime, setSelectedEndTime] = useState<string>("");
-  const [recurrenceWeeks, setRecurrenceWeeks] = useState<string>("0");
+  const [isRecurringWeekly, setIsRecurringWeekly] = useState(false);
 
   // yyyy-mm-dd in local time for the date input
   const defaultDateStr = useMemo(() => {
@@ -146,18 +152,15 @@ export function BookingDialog({
     setLoading(true);
     setError(null);
     try {
-      const base = {
-        title: formData.get("title") as string,
-        notes: (formData.get("notes") as string) || undefined,
-        roomId,
-        startTime: resolvedStartTime,
-        endTime: resolvedEndTime,
-      };
-      const weeks = Number(recurrenceWeeks);
-      if (weeks > 0) {
-        await createRecurringBooking({ ...base, recurrenceWeeks: weeks });
+      const title = formData.get("title") as string;
+      const notes = (formData.get("notes") as string) || undefined;
+      if (isRecurringWeekly) {
+        const dayOfWeek = resolvedStartTime.getDay();
+        const startMinutes = resolvedStartTime.getHours() * 60 + resolvedStartTime.getMinutes();
+        const endMinutes = resolvedEndTime.getHours() * 60 + resolvedEndTime.getMinutes();
+        await createRecurringBooking({ title, notes, roomId, dayOfWeek, startMinutes, endMinutes });
       } else {
-        await createBooking(base);
+        await createBooking({ title, notes, roomId, startTime: resolvedStartTime, endTime: resolvedEndTime });
       }
       onOpenChange(false);
     } catch (err) {
@@ -174,6 +177,32 @@ export function BookingDialog({
     setLoading(true);
     try {
       await cancelBooking(booking.id);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("failedToCancel"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelOccurrence() {
+    if (!booking?.recurringBookingId || !booking?.occurrenceDate) return;
+    setLoading(true);
+    try {
+      await cancelRecurringOccurrence(booking.recurringBookingId, booking.occurrenceDate);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("failedToCancel"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelSeries() {
+    if (!booking?.recurringBookingId || !confirm(t("confirmCancelSeries"))) return;
+    setLoading(true);
+    try {
+      await cancelRecurringSeries(booking.recurringBookingId);
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failedToCancel"));
@@ -202,7 +231,7 @@ export function BookingDialog({
   if (mode === "create") {
     return (
       <Dialog open={open} onOpenChange={(v) => {
-        if (!v) { setSelectedDate(""); setSelectedStartTime(""); setSelectedEndTime(""); setRecurrenceWeeks("0"); }
+        if (!v) { setSelectedDate(""); setSelectedStartTime(""); setSelectedEndTime(""); setIsRecurringWeekly(false); }
         onOpenChange(v);
       }}>
         <DialogContent>
@@ -275,21 +304,13 @@ export function BookingDialog({
               <Input name="notes" placeholder={t("notesPlaceholder")} />
             </div>
             {isAdmin && (
-              <div>
-                <Label>{t("repeatWeekly")}</Label>
-                <Select value={recurrenceWeeks} onValueChange={setRecurrenceWeeks}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">{t("noRepeat")}</SelectItem>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 2} value={String(i + 2)}>
-                        {t("weeks", { count: i + 2 })}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="recurring-weekly"
+                  checked={isRecurringWeekly}
+                  onCheckedChange={(checked) => setIsRecurringWeekly(checked === true)}
+                />
+                <Label htmlFor="recurring-weekly">{t("recurringWeekly")}</Label>
               </div>
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -306,7 +327,15 @@ export function BookingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{booking?.title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {booking?.title}
+            {booking?.isRecurring && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <Repeat className="h-3 w-3" />
+                {t("recurring")}
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-sm">
           <p>
@@ -316,7 +345,7 @@ export function BookingDialog({
           <p>{t("bookedBy", { name: booking?.user.name ?? tc("unknown") })}</p>
           {booking?.notes && <p>{t("notesLabel", { notes: booking.notes })}</p>}
         </div>
-        {canEdit && (
+        {canEdit && !booking?.isRecurring && (
           <form action={handleEdit} className="space-y-3 border-t pt-3">
             <div>
               <Label>{t("title")}</Label>
@@ -337,7 +366,27 @@ export function BookingDialog({
           </form>
         )}
         {error && <p className="text-sm text-destructive">{error}</p>}
-        {canCancel && (
+        {booking?.isRecurring && isAdmin && (
+          <div className="space-y-2 border-t pt-3">
+            <Button
+              variant="outline"
+              onClick={handleCancelOccurrence}
+              disabled={loading}
+              className="w-full"
+            >
+              {t("cancelThisDate")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSeries}
+              disabled={loading}
+              className="w-full"
+            >
+              {t("cancelEntireSeries")}
+            </Button>
+          </div>
+        )}
+        {canCancel && !booking?.isRecurring && (
           <Button
             variant="destructive"
             onClick={handleCancel}

@@ -16,6 +16,7 @@ import { BookingDialog } from "./booking-dialog";
 import { getWeekRange, getWeekDays, nextWeek, prevWeek } from "@/lib/utils";
 import {
   getBookingsForWeek,
+  getRecurringBookingsForWeek,
 } from "@/lib/actions/bookings";
 import { format } from "date-fns";
 
@@ -27,6 +28,9 @@ type Booking = {
   startTime: Date;
   endTime: Date;
   user: { id: string; name: string | null; email: string; color: string };
+  isRecurring?: boolean;
+  recurringBookingId?: string;
+  occurrenceDate?: string;
 };
 
 type WeeklyCalendarProps = {
@@ -68,6 +72,7 @@ export function WeeklyCalendar({
     booking?: Booking;
   }>({ open: false, mode: "create" });
 
+
   const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
   const days = getWeekDays(currentDate);
 
@@ -87,8 +92,11 @@ export function WeeklyCalendar({
 
   const loadBookings = useCallback(async () => {
     if (!selectedRoomId) return;
-    const data = await getBookingsForWeek(selectedRoomId, weekStart, weekEnd);
-    setBookings(data as Booking[]);
+    const [regular, recurring] = await Promise.all([
+      getBookingsForWeek(selectedRoomId, weekStart, weekEnd),
+      getRecurringBookingsForWeek(selectedRoomId, weekStart, weekEnd),
+    ]);
+    setBookings([...(regular as Booking[]), ...(recurring as Booking[])]);
   }, [selectedRoomId, weekStart.getTime(), weekEnd.getTime()]);
 
   useEffect(() => {
@@ -108,6 +116,7 @@ export function WeeklyCalendar({
       setDialogState({ open: true, mode: "view", booking });
     }
   }
+
 
   function getBookingSegmentsForDay(date: Date) {
     const dayStart = new Date(date);

@@ -11,6 +11,7 @@ type Booking = {
   displayStart: Date;
   displayEnd: Date;
   user: { id: string; name: string | null; color: string };
+  isRecurring?: boolean;
 };
 
 type DayColumnProps = {
@@ -80,6 +81,7 @@ export function DayColumn({
             displayStart={new Date(booking.displayStart)}
             displayEnd={new Date(booking.displayEnd)}
             isOwn={booking.user.id === currentUserId}
+            isRecurring={booking.isRecurring}
             userColor={booking.user.color}
             remPerHour={remPerHour}
             onClick={() => onBookingClick(booking.id)}
