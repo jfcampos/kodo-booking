@@ -13,14 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { changeUserRole, removeUser, impersonateUser } from "@/lib/actions/users";
 
 type User = {
@@ -65,73 +57,65 @@ export function UserTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{tc("name")}</TableHead>
-          <TableHead>{tc("email")}</TableHead>
-          <TableHead>{tc("role")}</TableHead>
-          <TableHead>{tc("actions")}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>{user.name ?? "\u2014"}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>
-              {user.id === currentUserId ? (
-                <Badge>{user.role}</Badge>
-              ) : (
-                <Select
-                  defaultValue={user.role}
-                  onValueChange={(v) => handleRoleChange(user.id, v as Role)}
-                  disabled={loading === user.id}
-                >
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="MEMBER">Member</SelectItem>
-                    <SelectItem value="VIEWER">Viewer</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            </TableCell>
-            <TableCell className="space-x-2">
-              {user.id !== currentUserId && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      setLoading(user.id);
-                      try {
-                        await impersonateUser(user.id);
-                        window.location.href = "/";
-                      } finally {
-                        setLoading(null);
-                      }
-                    }}
-                    disabled={loading === user.id}
-                  >
-                    {t("impersonate")}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemove(user.id)}
-                    disabled={loading === user.id}
-                  >
-                    {t("remove")}
-                  </Button>
-                </>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="space-y-3">
+      {users.map((user) => (
+        <div key={user.id} className="rounded-lg border p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-medium truncate">{user.name ?? "\u2014"}</p>
+              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+            </div>
+            {user.id === currentUserId ? (
+              <Badge className="shrink-0">{user.role}</Badge>
+            ) : (
+              <Select
+                defaultValue={user.role}
+                onValueChange={(v) => handleRoleChange(user.id, v as Role)}
+                disabled={loading === user.id}
+              >
+                <SelectTrigger className="w-28 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="MEMBER">Member</SelectItem>
+                  <SelectItem value="VIEWER">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          {user.id !== currentUserId && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={async () => {
+                  setLoading(user.id);
+                  try {
+                    await impersonateUser(user.id);
+                    window.location.href = "/";
+                  } finally {
+                    setLoading(null);
+                  }
+                }}
+                disabled={loading === user.id}
+              >
+                {t("impersonate")}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1"
+                onClick={() => handleRemove(user.id)}
+                disabled={loading === user.id}
+              >
+                {t("remove")}
+              </Button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

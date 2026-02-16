@@ -4,14 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { adminCancelBooking } from "@/lib/actions/bookings";
 import { format } from "date-fns";
@@ -44,59 +36,46 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{tc("title")}</TableHead>
-          <TableHead>{tc("room")}</TableHead>
-          <TableHead>{t("user")}</TableHead>
-          <TableHead>{tc("time")}</TableHead>
-          <TableHead>{tc("status")}</TableHead>
-          <TableHead>{tc("actions")}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {bookings.map((b) => (
-          <TableRow key={b.id}>
-            <TableCell>{b.title}</TableCell>
-            <TableCell>{b.room.name}</TableCell>
-            <TableCell>{b.user.name ?? b.user.email}</TableCell>
-            <TableCell className="text-xs">
+    <div className="space-y-3">
+      {bookings.map((b) => {
+        const isCancelled = b.cancelled;
+        const isPast = new Date(b.endTime) < new Date();
+        const canCancel = !isCancelled && new Date(b.startTime) > new Date();
+
+        return (
+          <div key={b.id} className="rounded-lg border p-3 space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{b.title}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {b.user.name ?? b.user.email} &middot; {b.room.name}
+                </p>
+              </div>
+              <Badge
+                variant={isCancelled ? "secondary" : isPast ? "outline" : "default"}
+                className="shrink-0"
+              >
+                {isCancelled ? t("cancelled") : isPast ? t("past") : t("active")}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
               {format(new Date(b.startTime), "d MMM HH:mm")} &ndash;{" "}
               {format(new Date(b.endTime), "HH:mm")}
-            </TableCell>
-            <TableCell>
-              <Badge
-                variant={
-                  b.cancelled
-                    ? "secondary"
-                    : new Date(b.endTime) < new Date()
-                      ? "outline"
-                      : "default"
-                }
+            </p>
+            {canCancel && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => handleCancel(b.id)}
+                disabled={loading === b.id}
               >
-                {b.cancelled
-                  ? t("cancelled")
-                  : new Date(b.endTime) < new Date()
-                    ? t("past")
-                    : t("active")}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {!b.cancelled && new Date(b.startTime) > new Date() && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleCancel(b.id)}
-                  disabled={loading === b.id}
-                >
-                  {tc("cancel")}
-                </Button>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                {tc("cancel")}
+              </Button>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

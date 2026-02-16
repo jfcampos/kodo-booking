@@ -15,18 +15,18 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">{t("dashboard")}</h1>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{userCount}</div>
-          <div className="text-sm text-muted-foreground">{t("users")}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="rounded-lg border p-2 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold">{userCount}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">{t("users")}</div>
         </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{roomCount}</div>
-          <div className="text-sm text-muted-foreground">{t("activeRooms")}</div>
+        <div className="rounded-lg border p-2 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold">{roomCount}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">{t("activeRooms")}</div>
         </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{activeBookings}</div>
-          <div className="text-sm text-muted-foreground">{t("activeBookings")}</div>
+        <div className="rounded-lg border p-2 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold">{activeBookings}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">{t("activeBookings")}</div>
         </div>
       </div>
     </div>

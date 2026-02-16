@@ -26,10 +26,10 @@ export default async function AdminLayout({
 
   return (
     <div className="space-y-4">
-      <nav className="flex gap-2 border-b pb-2">
+      <nav className="flex gap-1 sm:gap-2 border-b pb-2 overflow-x-auto">
         {adminLinks.map((link) => (
           <Link key={link.href} href={link.href}>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="text-xs sm:text-sm whitespace-nowrap">
               {link.label}
             </Button>
           </Link>
