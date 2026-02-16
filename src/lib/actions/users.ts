@@ -40,10 +40,34 @@ export async function changeUserRole(userId: string, role: Role) {
   await prisma.user.update({ where: { id: userId }, data: { role } });
 }
 
+export async function getUserActiveBookingCount(userId: string) {
+  await requireAdmin();
+  const [bookings, recurring] = await Promise.all([
+    prisma.booking.count({
+      where: { userId, cancelled: false, endTime: { gt: new Date() } },
+    }),
+    prisma.recurringBooking.count({
+      where: { userId, cancelled: false },
+    }),
+  ]);
+  return bookings + recurring;
+}
+
 export async function removeUser(userId: string) {
   const t = await getTranslations("ServerErrors");
   const admin = await requireAdmin();
   if (admin.id === userId) throw new Error(t("cannotRemoveSelf"));
+
+  // Cancel all active bookings and recurring bookings
+  await prisma.booking.updateMany({
+    where: { userId, cancelled: false },
+    data: { cancelled: true },
+  });
+  await prisma.recurringBooking.updateMany({
+    where: { userId, cancelled: false },
+    data: { cancelled: true },
+  });
+
   await prisma.user.delete({ where: { id: userId } });
 }
 

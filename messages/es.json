@@ -114,7 +114,9 @@
     "title": "Usuarios",
     "impersonate": "Suplantar",
     "remove": "Eliminar",
-    "confirmRemove": "\u00bfEliminar este usuario?"
+    "confirmRemoveTitle": "Eliminar usuario",
+    "confirmRemoveMessage": "\u00bfEliminar a {name}? Esta acci\u00f3n no se puede deshacer.",
+    "hasActiveBookings": "Este usuario tiene {count} reserva(s) activa(s) que ser\u00e1n canceladas."
   },
   "AdminRooms": {
     "title": "Salas",
