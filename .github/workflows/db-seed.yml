@@ -1,0 +1,30 @@
+name: DB Seed
+
+on:
+  push:
+    tags:
+      - "[db-seed]"
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm prisma generate
+
+      - run: pnpm prisma db seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ROOT_USER_EMAIL: ${{ secrets.ROOT_USER_EMAIL }}
+          ROOT_USER_PASSWORD: ${{ secrets.ROOT_USER_PASSWORD }}
+          ROOT_USER_NAME: ${{ secrets.ROOT_USER_NAME }}
