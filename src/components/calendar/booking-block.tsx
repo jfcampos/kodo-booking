@@ -51,7 +51,7 @@ export function BookingBlock({
       <button
         onClick={onClick}
         aria-label={`${title} by ${userName}, ${formatTime(startTime)}\u2013${formatTime(endTime)}`}
-        className={`h-full w-full rounded px-2 py-1 text-xs overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        className={`h-full w-full rounded px-1 py-0.5 sm:px-2 sm:py-1 text-[10px] sm:text-xs overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
           isOwn ? "ring-1 ring-foreground/20" : ""
         }`}
         style={{

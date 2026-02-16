@@ -44,6 +44,10 @@ export function formatDayHeader(date: Date) {
   return format(date, "EEE d");
 }
 
+export function formatDayHeaderShort(date: Date) {
+  return format(date, "EEEEE d");
+}
+
 const ALARM_START = 1; // 1am
 const ALARM_END = 8;   // 8am
 

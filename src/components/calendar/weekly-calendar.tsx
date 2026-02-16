@@ -221,9 +221,9 @@ export function WeeklyCalendar({
         </div>
       </div>
 
-      <div className="flex overflow-x-auto">
-        <div className="w-14 flex-shrink-0">
-          <div className="h-10 border-b" />
+      <div className="flex">
+        <div className="w-9 sm:w-14 flex-shrink-0">
+          <div className="h-8 sm:h-10 border-b" />
           {Array.from({ length: 24 * (60 / displayGranularity) }, (_, i) => {
             const totalMinutes = i * displayGranularity;
             const h = Math.floor(totalMinutes / 60);
@@ -232,9 +232,9 @@ export function WeeklyCalendar({
               <div
                 key={i}
                 style={{ height: `${slotHeightRem}rem` }}
-                className="pr-2 text-right text-xs text-muted-foreground"
+                className="pr-0.5 sm:pr-2 text-right text-[10px] sm:text-xs text-muted-foreground"
               >
-                {m === 0 ? `${String(h).padStart(2, "0")}:00` : ""}
+                {m === 0 ? `${h}:00` : ""}
               </div>
             );
           })}

@@ -1,7 +1,7 @@
 "use client";
 
 import { BookingBlock } from "./booking-block";
-import { formatDayHeader } from "@/lib/utils";
+import { formatDayHeader, formatDayHeaderShort } from "@/lib/utils";
 
 type Booking = {
   id: string;
@@ -38,13 +38,14 @@ export function DayColumn({
   const remPerHour = slotHeightRem * (60 / displayGranularity);
 
   return (
-    <div className="flex-1 min-w-[100px]" role="columnheader">
+    <div className="flex-1 min-w-0" role="columnheader">
       <div
-        className={`sticky top-0 z-10 border-b bg-background p-2 text-center text-sm font-medium ${
+        className={`sticky top-0 z-10 h-8 sm:h-10 flex items-center justify-center border-b bg-background px-0.5 text-xs sm:text-sm font-medium ${
           isToday ? "text-primary" : ""
         }`}
       >
-        {formatDayHeader(date)}
+        <span className="sm:hidden">{formatDayHeaderShort(date)}</span>
+        <span className="hidden sm:inline">{formatDayHeader(date)}</span>
       </div>
       <div className="relative" role="group" aria-label={formatDayHeader(date)}>
         {Array.from({ length: totalSlots }, (_, i) => {

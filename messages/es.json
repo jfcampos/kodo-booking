@@ -32,8 +32,10 @@
     "registrationFailed": "Error en el registro"
   },
   "Header": {
-    "admin": "Admin",
+    "admin": "Administración",
     "history": "Historial",
+    "profile": "Perfil",
+    "logOut": "Cerrar sesión",
     "impersonating": "Suplantando a {name}",
     "stopImpersonating": "Detener"
   },

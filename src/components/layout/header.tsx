@@ -1,7 +1,9 @@
 import { auth, signOut } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { stopImpersonating } from "@/lib/actions/users";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -10,8 +12,12 @@ export async function Header() {
   if (!session?.user) return null;
 
   const t = await getTranslations("Header");
-  const tAuth = await getTranslations("Auth");
   const impersonatedBy = (session as any).impersonatedBy as string | undefined;
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { color: true },
+  });
 
   return (
     <>
@@ -35,35 +41,20 @@ export async function Header() {
           <Link href="/" className="font-semibold">
             Kodo Booking
           </Link>
-          <div className="flex items-center gap-4">
-            {(session.user.role === "ADMIN" || impersonatedBy) && (
-              <Link href="/admin">
-                <Button variant="ghost" size="sm">
-                  {t("admin")}
-                </Button>
-              </Link>
-            )}
-            <Link href="/history">
-              <Button variant="ghost" size="sm">
-                {t("history")}
-              </Button>
-            </Link>
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link href="/settings" className="text-sm text-muted-foreground hover:underline">
-              {session.user.name}
-            </Link>
-            {!impersonatedBy && (
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/sign-in" });
-                }}
-              >
-                <Button variant="outline" size="sm" type="submit">
-                  {tAuth("signOut")}
-                </Button>
-              </form>
-            )}
+            <UserMenu
+              name={session.user.name ?? null}
+              email={session.user.email ?? null}
+              image={session.user.image ?? null}
+              color={dbUser?.color ?? "#6366f1"}
+              role={session.user.role}
+              isImpersonating={!!impersonatedBy}
+              signOutAction={async () => {
+                "use server";
+                await signOut({ redirectTo: "/sign-in" });
+              }}
+            />
           </div>
         </div>
       </header>
