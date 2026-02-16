@@ -234,12 +234,12 @@ export function BookingDialog({
         if (!v) { setSelectedDate(""); setSelectedStartTime(""); setSelectedEndTime(""); setIsRecurringWeekly(false); }
         onOpenChange(v);
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100%-1.5rem)] p-4 sm:p-6 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("newBooking")}</DialogTitle>
           </DialogHeader>
-          <form action={handleCreate} className="space-y-3">
-            <div>
+          <form action={handleCreate} className="space-y-3 min-w-0">
+            <div className="min-w-0">
               <Label>{t("date")}</Label>
               <Input
                 type="date"
@@ -297,7 +297,7 @@ export function BookingDialog({
             )}
             <div>
               <Label>{t("title")}</Label>
-              <Input name="title" placeholder={t("titlePlaceholder")} required />
+              <Input name="title" placeholder={t("titlePlaceholder")} required autoFocus />
             </div>
             <div>
               <Label>{t("notes")}</Label>
