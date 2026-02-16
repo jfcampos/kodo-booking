@@ -34,11 +34,15 @@ export function DayColumn({
   onBookingClick,
 }: DayColumnProps) {
   const totalSlots = 24 * (60 / displayGranularity);
-  const isToday = new Date().toDateString() === date.toDateString();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const isToday = todayStart.getTime() === dayStart.getTime();
+  const isPast = dayStart.getTime() < todayStart.getTime();
   const remPerHour = slotHeightRem * (60 / displayGranularity);
 
   return (
-    <div className="flex-1 min-w-0" role="columnheader">
+    <div className={`flex-1 min-w-0 ${isPast ? "opacity-50" : ""}`} role="columnheader">
       <div
         className={`sticky top-0 z-10 h-10 sm:h-10 flex items-center justify-center border-b px-0.5 text-xs sm:text-sm font-medium ${
           isToday ? "bg-primary/5" : "bg-background"
