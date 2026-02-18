@@ -50,7 +50,8 @@ export function UserTable({
   async function handleRoleChange(userId: string, role: Role) {
     setLoading(userId);
     try {
-      await changeUserRole(userId, role);
+      const result = await changeUserRole(userId, role);
+      if (result && "error" in result) return;
       router.refresh();
     } finally {
       setLoading(null);
@@ -71,7 +72,8 @@ export function UserTable({
     if (!removeDialog.user) return;
     setLoading(removeDialog.user.id);
     try {
-      await removeUser(removeDialog.user.id);
+      const result = await removeUser(removeDialog.user.id);
+      if (result && "error" in result) return;
       setRemoveDialog({ open: false, user: null, bookingCount: 0 });
       router.refresh();
     } finally {
@@ -117,7 +119,8 @@ export function UserTable({
                   onClick={async () => {
                     setLoading(user.id);
                     try {
-                      await impersonateUser(user.id);
+                      const result = await impersonateUser(user.id);
+                      if (result && "error" in result) return;
                       window.location.href = "/";
                     } finally {
                       setLoading(null);

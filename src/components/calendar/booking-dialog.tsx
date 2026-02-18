@@ -154,19 +154,22 @@ export function BookingDialog({
     try {
       const title = formData.get("title") as string;
       const notes = (formData.get("notes") as string) || undefined;
+      let result;
       if (isRecurringWeekly) {
         const dayOfWeek = resolvedStartTime.getDay();
         const startMinutes = resolvedStartTime.getHours() * 60 + resolvedStartTime.getMinutes();
         const endMinutes = resolvedEndTime.getHours() * 60 + resolvedEndTime.getMinutes();
-        await createRecurringBooking({ title, notes, roomId, dayOfWeek, startMinutes, endMinutes });
+        result = await createRecurringBooking({ title, notes, roomId, dayOfWeek, startMinutes, endMinutes });
       } else {
-        await createBooking({ title, notes, roomId, startTime: resolvedStartTime, endTime: resolvedEndTime });
+        result = await createBooking({ title, notes, roomId, startTime: resolvedStartTime, endTime: resolvedEndTime });
+      }
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
       }
       onOpenChange(false);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("failedToCreate")
-      );
+    } catch {
+      setError(t("failedToCreate"));
     } finally {
       setLoading(false);
     }
@@ -176,10 +179,14 @@ export function BookingDialog({
     if (!booking || !confirm(t("confirmCancel"))) return;
     setLoading(true);
     try {
-      await cancelBooking(booking.id);
+      const result = await cancelBooking(booking.id);
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
+      }
       onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToCancel"));
+    } catch {
+      setError(t("failedToCancel"));
     } finally {
       setLoading(false);
     }
@@ -189,10 +196,14 @@ export function BookingDialog({
     if (!booking?.recurringBookingId || !booking?.occurrenceDate) return;
     setLoading(true);
     try {
-      await cancelRecurringOccurrence(booking.recurringBookingId, booking.occurrenceDate);
+      const result = await cancelRecurringOccurrence(booking.recurringBookingId, booking.occurrenceDate);
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
+      }
       onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToCancel"));
+    } catch {
+      setError(t("failedToCancel"));
     } finally {
       setLoading(false);
     }
@@ -202,10 +213,14 @@ export function BookingDialog({
     if (!booking?.recurringBookingId || !confirm(t("confirmCancelSeries"))) return;
     setLoading(true);
     try {
-      await cancelRecurringSeries(booking.recurringBookingId);
+      const result = await cancelRecurringSeries(booking.recurringBookingId);
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
+      }
       onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToCancel"));
+    } catch {
+      setError(t("failedToCancel"));
     } finally {
       setLoading(false);
     }
@@ -216,13 +231,17 @@ export function BookingDialog({
     setLoading(true);
     setError(null);
     try {
-      await editBooking(booking.id, {
+      const result = await editBooking(booking.id, {
         title: formData.get("title") as string,
         notes: (formData.get("notes") as string) || undefined,
       });
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
+      }
       onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToEdit"));
+    } catch {
+      setError(t("failedToEdit"));
     } finally {
       setLoading(false);
     }
@@ -232,6 +251,7 @@ export function BookingDialog({
     return (
       <Dialog open={open} onOpenChange={(v) => {
         if (!v) { setSelectedDate(""); setSelectedStartTime(""); setSelectedEndTime(""); setIsRecurringWeekly(false); }
+        setError(null);
         onOpenChange(v);
       }}>
         <DialogContent className="max-w-[calc(100%-1.5rem)] p-4 sm:p-6 sm:max-w-lg">
@@ -324,7 +344,7 @@ export function BookingDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { setError(null); onOpenChange(v); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

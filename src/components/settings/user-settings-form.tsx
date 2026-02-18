@@ -29,12 +29,14 @@ export function UserSettingsForm({
     setSaved(false);
     setError(null);
     try {
-      await updateMyName(formData.get("name") as string);
-      await updateMyColor(formData.get("color") as string);
+      const nameResult = await updateMyName(formData.get("name") as string);
+      if (nameResult && "error" in nameResult) { setError(nameResult.error); return; }
+      const colorResult = await updateMyColor(formData.get("color") as string);
+      if (colorResult && "error" in colorResult) { setError(colorResult.error); return; }
       setSaved(true);
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tc("failedToSave"));
+    } catch {
+      setError(tc("failedToSave"));
     } finally {
       setLoading(false);
     }

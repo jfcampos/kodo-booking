@@ -33,11 +33,15 @@ export async function listUsers() {
   });
 }
 
-export async function changeUserRole(userId: string, role: Role) {
-  const t = await getTranslations("ServerErrors");
-  const admin = await requireAdmin();
-  if (admin.id === userId) throw new Error(t("cannotChangeOwnRole"));
-  await prisma.user.update({ where: { id: userId }, data: { role } });
+export async function changeUserRole(userId: string, role: Role): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const admin = await requireAdmin();
+    if (admin.id === userId) return { error: t("cannotChangeOwnRole") };
+    await prisma.user.update({ where: { id: userId }, data: { role } });
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
 export async function getUserActiveBookingCount(userId: string) {
@@ -53,51 +57,67 @@ export async function getUserActiveBookingCount(userId: string) {
   return bookings + recurring;
 }
 
-export async function removeUser(userId: string) {
-  const t = await getTranslations("ServerErrors");
-  const admin = await requireAdmin();
-  if (admin.id === userId) throw new Error(t("cannotRemoveSelf"));
+export async function removeUser(userId: string): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const admin = await requireAdmin();
+    if (admin.id === userId) return { error: t("cannotRemoveSelf") };
 
-  // Cancel all active bookings and recurring bookings
-  await prisma.booking.updateMany({
-    where: { userId, cancelled: false },
-    data: { cancelled: true },
-  });
-  await prisma.recurringBooking.updateMany({
-    where: { userId, cancelled: false },
-    data: { cancelled: true },
-  });
+    // Cancel all active bookings and recurring bookings
+    await prisma.booking.updateMany({
+      where: { userId, cancelled: false },
+      data: { cancelled: true },
+    });
+    await prisma.recurringBooking.updateMany({
+      where: { userId, cancelled: false },
+      data: { cancelled: true },
+    });
 
-  await prisma.user.delete({ where: { id: userId } });
+    await prisma.user.delete({ where: { id: userId } });
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
-export async function updateMyName(name: string) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireAuth();
-  const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 100) throw new Error(t("invalidName"));
-  await prisma.user.update({ where: { id: user.id }, data: { name: trimmed } });
-  revalidatePath("/");
-  revalidatePath("/settings");
+export async function updateMyName(name: string): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireAuth();
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > 100) return { error: t("invalidName") };
+    await prisma.user.update({ where: { id: user.id }, data: { name: trimmed } });
+    revalidatePath("/");
+    revalidatePath("/settings");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
-export async function updateMyColor(color: string) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireAuth();
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error(t("invalidColor"));
-  await prisma.user.update({ where: { id: user.id }, data: { color } });
-  revalidatePath("/");
-  revalidatePath("/settings");
+export async function updateMyColor(color: string): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireAuth();
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: t("invalidColor") };
+    await prisma.user.update({ where: { id: user.id }, data: { color } });
+    revalidatePath("/");
+    revalidatePath("/settings");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
-export async function impersonateUser(userId: string) {
-  const t = await getTranslations("ServerErrors");
-  const admin = await requireAdmin();
-  if (userId === admin.id) throw new Error(t("cannotImpersonateSelf"));
-  const target = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-  const cookieStore = await cookies();
-  cookieStore.set(IMPERSONATE_COOKIE, target.id, { httpOnly: true, path: "/" });
-  revalidatePath("/");
+export async function impersonateUser(userId: string): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const admin = await requireAdmin();
+    if (userId === admin.id) return { error: t("cannotImpersonateSelf") };
+    const target = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const cookieStore = await cookies();
+    cookieStore.set(IMPERSONATE_COOKIE, target.id, { httpOnly: true, path: "/" });
+    revalidatePath("/");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
 export async function stopImpersonating() {

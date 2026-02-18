@@ -15,18 +15,22 @@ export async function updateSettings(input: {
   maxAdvanceDays: number;
   maxActiveBookings: number;
   maxBookingDurationHours: number;
-}) {
-  const t = await getTranslations("ServerErrors");
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN")
-    throw new Error(t("unauthorized"));
+}): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN")
+      return { error: t("unauthorized") };
 
-  const parsed = settingsSchema.parse(input);
-  await prisma.appSettings.update({
-    where: { id: "default" },
-    data: parsed,
-  });
+    const parsed = settingsSchema.parse(input);
+    await prisma.appSettings.update({
+      where: { id: "default" },
+      data: parsed,
+    });
 
-  revalidatePath("/");
-  revalidatePath("/admin/settings");
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }

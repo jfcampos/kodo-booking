@@ -31,176 +31,184 @@ export async function createBooking(input: {
   roomId: string;
   startTime: Date;
   endTime: Date;
-}) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireAuth();
-  if (user.role === "VIEWER")
-    throw new Error(t("viewerCannotBook"));
+}): Promise<{ error: string } | { id: string }> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireAuth();
+    if (user.role === "VIEWER")
+      return { error: t("viewerCannotBook") };
 
-  const parsed = bookingSchema.parse(input);
-  const settings = await getSettings();
+    const parsed = bookingSchema.parse(input);
+    const settings = await getSettings();
 
-  // Validate granularity alignment
-  const granMs = settings.granularityMinutes * 60 * 1000;
-  if (
-    parsed.startTime.getTime() % granMs !== 0 ||
-    parsed.endTime.getTime() % granMs !== 0
-  ) {
-    throw new Error(
-      t("timesNotAligned", { minutes: settings.granularityMinutes })
-    );
+    // Validate granularity alignment
+    const granMs = settings.granularityMinutes * 60 * 1000;
+    if (
+      parsed.startTime.getTime() % granMs !== 0 ||
+      parsed.endTime.getTime() % granMs !== 0
+    ) {
+      return { error: t("timesNotAligned", { minutes: settings.granularityMinutes }) };
+    }
+
+    // Validate booking duration
+    const durationMs = parsed.endTime.getTime() - parsed.startTime.getTime();
+    const maxDurationMs = settings.maxBookingDurationHours * 60 * 60 * 1000;
+    if (durationMs > maxDurationMs) {
+      return { error: t("maxDurationExceeded", { hours: settings.maxBookingDurationHours }) };
+    }
+
+    // Validate advance window
+    const maxDate = addDays(new Date(), settings.maxAdvanceDays);
+    if (parsed.startTime > maxDate) {
+      return { error: t("tooFarInAdvance", { days: settings.maxAdvanceDays }) };
+    }
+
+    // Validate start is in the future
+    if (parsed.startTime <= new Date()) {
+      return { error: t("cannotBookPast") };
+    }
+
+    // Check active bookings limit
+    const activeCount = await prisma.booking.count({
+      where: {
+        userId: user.id,
+        cancelled: false,
+        endTime: { gt: new Date() },
+      },
+    });
+    if (activeCount >= settings.maxActiveBookings) {
+      return { error: t("maxActiveBookings", { count: settings.maxActiveBookings }) };
+    }
+
+    // Check for conflicts (overlapping bookings on same room)
+    const conflict = await prisma.booking.findFirst({
+      where: {
+        roomId: parsed.roomId,
+        cancelled: false,
+        startTime: { lt: parsed.endTime },
+        endTime: { gt: parsed.startTime },
+      },
+    });
+    if (conflict)
+      return { error: t("timeConflict") };
+
+    // Check for blocked time ranges
+    const blocked = await prisma.blockedTimeRange.findFirst({
+      where: {
+        roomId: parsed.roomId,
+        startTime: { lt: parsed.endTime },
+        endTime: { gt: parsed.startTime },
+      },
+    });
+    if (blocked) return { error: t("timeBlocked") };
+
+    // Check for recurring booking conflicts
+    const bookingDayOfWeek = parsed.startTime.getDay();
+    const bookingStartMin = parsed.startTime.getHours() * 60 + parsed.startTime.getMinutes();
+    const bookingEndMin = parsed.endTime.getHours() * 60 + parsed.endTime.getMinutes();
+    const bookingDateStr = parsed.startTime.toISOString().slice(0, 10);
+
+    const recurringConflicts = await prisma.recurringBooking.findMany({
+      where: {
+        roomId: parsed.roomId,
+        cancelled: false,
+        dayOfWeek: bookingDayOfWeek,
+        startMinutes: { lt: bookingEndMin },
+        endMinutes: { gt: bookingStartMin },
+      },
+    });
+    const hasRecurringConflict = recurringConflicts.some((rb) => {
+      const exceptions = rb.exceptionDates as string[];
+      return !exceptions.includes(bookingDateStr);
+    });
+    if (hasRecurringConflict) return { error: t("timeConflict") };
+
+    const booking = await prisma.booking.create({
+      data: {
+        title: parsed.title,
+        notes: parsed.notes,
+        startTime: parsed.startTime,
+        endTime: parsed.endTime,
+        roomId: parsed.roomId,
+        userId: user.id,
+      },
+    });
+
+    revalidatePath("/");
+    return { id: booking.id };
+  } catch {
+    return { error: "Unexpected error" };
   }
-
-  // Validate booking duration
-  const durationMs = parsed.endTime.getTime() - parsed.startTime.getTime();
-  const maxDurationMs = settings.maxBookingDurationHours * 60 * 60 * 1000;
-  if (durationMs > maxDurationMs) {
-    throw new Error(
-      t("maxDurationExceeded", { hours: settings.maxBookingDurationHours })
-    );
-  }
-
-  // Validate advance window
-  const maxDate = addDays(new Date(), settings.maxAdvanceDays);
-  if (parsed.startTime > maxDate) {
-    throw new Error(
-      t("tooFarInAdvance", { days: settings.maxAdvanceDays })
-    );
-  }
-
-  // Validate start is in the future
-  if (parsed.startTime <= new Date()) {
-    throw new Error(t("cannotBookPast"));
-  }
-
-  // Check active bookings limit
-  const activeCount = await prisma.booking.count({
-    where: {
-      userId: user.id,
-      cancelled: false,
-      endTime: { gt: new Date() },
-    },
-  });
-  if (activeCount >= settings.maxActiveBookings) {
-    throw new Error(
-      t("maxActiveBookings", { count: settings.maxActiveBookings })
-    );
-  }
-
-  // Check for conflicts (overlapping bookings on same room)
-  const conflict = await prisma.booking.findFirst({
-    where: {
-      roomId: parsed.roomId,
-      cancelled: false,
-      startTime: { lt: parsed.endTime },
-      endTime: { gt: parsed.startTime },
-    },
-  });
-  if (conflict)
-    throw new Error(t("timeConflict"));
-
-  // Check for blocked time ranges
-  const blocked = await prisma.blockedTimeRange.findFirst({
-    where: {
-      roomId: parsed.roomId,
-      startTime: { lt: parsed.endTime },
-      endTime: { gt: parsed.startTime },
-    },
-  });
-  if (blocked) throw new Error(t("timeBlocked"));
-
-  // Check for recurring booking conflicts
-  const bookingDayOfWeek = parsed.startTime.getDay();
-  const bookingStartMin = parsed.startTime.getHours() * 60 + parsed.startTime.getMinutes();
-  const bookingEndMin = parsed.endTime.getHours() * 60 + parsed.endTime.getMinutes();
-  const bookingDateStr = parsed.startTime.toISOString().slice(0, 10);
-
-  const recurringConflicts = await prisma.recurringBooking.findMany({
-    where: {
-      roomId: parsed.roomId,
-      cancelled: false,
-      dayOfWeek: bookingDayOfWeek,
-      startMinutes: { lt: bookingEndMin },
-      endMinutes: { gt: bookingStartMin },
-    },
-  });
-  const hasRecurringConflict = recurringConflicts.some((rb) => {
-    const exceptions = rb.exceptionDates as string[];
-    return !exceptions.includes(bookingDateStr);
-  });
-  if (hasRecurringConflict) throw new Error(t("timeConflict"));
-
-  const booking = await prisma.booking.create({
-    data: {
-      title: parsed.title,
-      notes: parsed.notes,
-      startTime: parsed.startTime,
-      endTime: parsed.endTime,
-      roomId: parsed.roomId,
-      userId: user.id,
-    },
-  });
-
-  revalidatePath("/");
-  return booking;
 }
 
-export async function cancelBooking(bookingId: string) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireAuth();
-  const booking = await prisma.booking.findUniqueOrThrow({
-    where: { id: bookingId },
-  });
+export async function cancelBooking(bookingId: string): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireAuth();
+    const booking = await prisma.booking.findUniqueOrThrow({
+      where: { id: bookingId },
+    });
 
-  if (booking.userId !== user.id && user.role !== "ADMIN") {
-    throw new Error(t("canOnlyCancelOwn"));
+    if (booking.userId !== user.id && user.role !== "ADMIN") {
+      return { error: t("canOnlyCancelOwn") };
+    }
+    if (booking.startTime <= new Date()) {
+      return { error: t("alreadyStarted") };
+    }
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { cancelled: true },
+    });
+
+    revalidatePath("/");
+  } catch {
+    return { error: "Unexpected error" };
   }
-  if (booking.startTime <= new Date()) {
-    throw new Error(t("alreadyStarted"));
-  }
-
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { cancelled: true },
-  });
-
-  revalidatePath("/");
 }
 
 export async function editBooking(
   bookingId: string,
   input: { title: string; notes?: string }
-) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireAuth();
-  const parsed = editBookingSchema.parse(input);
-  const booking = await prisma.booking.findUniqueOrThrow({
-    where: { id: bookingId },
-  });
+): Promise<{ error: string } | void> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireAuth();
+    const parsed = editBookingSchema.parse(input);
+    const booking = await prisma.booking.findUniqueOrThrow({
+      where: { id: bookingId },
+    });
 
-  if (booking.userId !== user.id && user.role !== "ADMIN") {
-    throw new Error(t("canOnlyEditOwn"));
+    if (booking.userId !== user.id && user.role !== "ADMIN") {
+      return { error: t("canOnlyEditOwn") };
+    }
+    if (booking.startTime <= new Date()) {
+      return { error: t("cannotEditPast") };
+    }
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { title: parsed.title, notes: parsed.notes },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/history");
+  } catch {
+    return { error: "Unexpected error" };
   }
-  if (booking.startTime <= new Date()) {
-    throw new Error(t("cannotEditPast"));
-  }
-
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { title: parsed.title, notes: parsed.notes },
-  });
-
-  revalidatePath("/");
-  revalidatePath("/history");
 }
 
-export async function adminCancelBooking(bookingId: string) {
-  await requireRole(["ADMIN"]);
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { cancelled: true },
-  });
-  revalidatePath("/");
+export async function adminCancelBooking(bookingId: string): Promise<{ error: string } | void> {
+  try {
+    await requireRole(["ADMIN"]);
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { cancelled: true },
+    });
+    revalidatePath("/");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
 export async function getBookingsForWeek(
@@ -244,37 +252,41 @@ export async function createRecurringBooking(input: {
   dayOfWeek: number;
   startMinutes: number;
   endMinutes: number;
-}) {
-  const t = await getTranslations("ServerErrors");
-  const user = await requireRole(["ADMIN"]);
-  const parsed = recurringBookingSchema.parse(input);
+}): Promise<{ error: string } | { id: string }> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const user = await requireRole(["ADMIN"]);
+    const parsed = recurringBookingSchema.parse(input);
 
-  // Check for conflicts with other recurring bookings on same room/day/time
-  const conflict = await prisma.recurringBooking.findFirst({
-    where: {
-      roomId: parsed.roomId,
-      cancelled: false,
-      dayOfWeek: parsed.dayOfWeek,
-      startMinutes: { lt: parsed.endMinutes },
-      endMinutes: { gt: parsed.startMinutes },
-    },
-  });
-  if (conflict) throw new Error(t("recurringConflict"));
+    // Check for conflicts with other recurring bookings on same room/day/time
+    const conflict = await prisma.recurringBooking.findFirst({
+      where: {
+        roomId: parsed.roomId,
+        cancelled: false,
+        dayOfWeek: parsed.dayOfWeek,
+        startMinutes: { lt: parsed.endMinutes },
+        endMinutes: { gt: parsed.startMinutes },
+      },
+    });
+    if (conflict) return { error: t("recurringConflict") };
 
-  const recurring = await prisma.recurringBooking.create({
-    data: {
-      title: parsed.title,
-      notes: parsed.notes,
-      dayOfWeek: parsed.dayOfWeek,
-      startMinutes: parsed.startMinutes,
-      endMinutes: parsed.endMinutes,
-      roomId: parsed.roomId,
-      userId: user.id,
-    },
-  });
+    const recurring = await prisma.recurringBooking.create({
+      data: {
+        title: parsed.title,
+        notes: parsed.notes,
+        dayOfWeek: parsed.dayOfWeek,
+        startMinutes: parsed.startMinutes,
+        endMinutes: parsed.endMinutes,
+        roomId: parsed.roomId,
+        userId: user.id,
+      },
+    });
 
-  revalidatePath("/");
-  return recurring;
+    revalidatePath("/");
+    return { id: recurring.id };
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
 export async function getRecurringBookingsForWeek(
@@ -336,31 +348,38 @@ export async function getRecurringBookingsForWeek(
   return occurrences;
 }
 
-export async function cancelRecurringOccurrence(id: string, dateStr: string) {
-  const t = await getTranslations("ServerErrors");
-  await requireRole(["ADMIN"]);
+export async function cancelRecurringOccurrence(id: string, dateStr: string): Promise<{ error: string } | void> {
+  try {
+    await requireRole(["ADMIN"]);
 
-  const rb = await prisma.recurringBooking.findUniqueOrThrow({ where: { id } });
-  const exceptions = rb.exceptionDates as string[];
-  if (exceptions.includes(dateStr)) return;
+    const rb = await prisma.recurringBooking.findUniqueOrThrow({ where: { id } });
+    const exceptions = rb.exceptionDates as string[];
+    if (exceptions.includes(dateStr)) return;
 
-  await prisma.recurringBooking.update({
-    where: { id },
-    data: { exceptionDates: [...exceptions, dateStr] },
-  });
+    await prisma.recurringBooking.update({
+      where: { id },
+      data: { exceptionDates: [...exceptions, dateStr] },
+    });
 
-  revalidatePath("/");
+    revalidatePath("/");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
-export async function cancelRecurringSeries(id: string) {
-  await requireRole(["ADMIN"]);
+export async function cancelRecurringSeries(id: string): Promise<{ error: string } | void> {
+  try {
+    await requireRole(["ADMIN"]);
 
-  await prisma.recurringBooking.update({
-    where: { id },
-    data: { cancelled: true },
-  });
+    await prisma.recurringBooking.update({
+      where: { id },
+      data: { cancelled: true },
+    });
 
-  revalidatePath("/");
+    revalidatePath("/");
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }
 
 export async function getUserBookingHistory() {

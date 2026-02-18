@@ -25,15 +25,19 @@ export default function SignUpPage() {
 
     const formData = new FormData(e.currentTarget);
     try {
-      await register({
+      const result = await register({
         name: formData.get("name") as string,
         email: formData.get("email") as string,
         password: formData.get("password") as string,
         token,
       });
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
       router.push("/sign-in");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("registrationFailed"));
+    } catch {
+      setError(t("registrationFailed"));
     } finally {
       setLoading(false);
     }
@@ -49,9 +53,12 @@ export default function SignUpPage() {
           <form
             action={async () => {
               try {
-                await googleSignUpWithInvite(token);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : t("registrationFailed"));
+                const result = await googleSignUpWithInvite(token);
+                if (result && "error" in result) {
+                  setError(result.error);
+                }
+              } catch {
+                setError(t("registrationFailed"));
               }
             }}
           >

@@ -7,15 +7,15 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
-export async function googleSignUpWithInvite(token: string) {
+export async function googleSignUpWithInvite(token: string): Promise<{ error: string } | void> {
   const t = await getTranslations("ServerErrors");
 
   const invite = await prisma.inviteLink.findUnique({
     where: { token },
   });
-  if (!invite) throw new Error(t("invalidInvite"));
-  if (invite.usedAt) throw new Error(t("inviteUsed"));
-  if (invite.expiresAt < new Date()) throw new Error(t("inviteExpired"));
+  if (!invite) return { error: t("invalidInvite") };
+  if (invite.usedAt) return { error: t("inviteUsed") };
+  if (invite.expiresAt < new Date()) return { error: t("inviteExpired") };
 
   const cookieStore = await cookies();
   cookieStore.set("kodo-invite-token", token, {
@@ -33,38 +33,42 @@ export async function register(input: {
   email: string;
   password: string;
   token: string;
-}) {
-  const t = await getTranslations("ServerErrors");
-  const parsed = registerSchema.parse(input);
+}): Promise<{ error: string } | { success: true }> {
+  try {
+    const t = await getTranslations("ServerErrors");
+    const parsed = registerSchema.parse(input);
 
-  const invite = await prisma.inviteLink.findUnique({
-    where: { token: parsed.token },
-  });
+    const invite = await prisma.inviteLink.findUnique({
+      where: { token: parsed.token },
+    });
 
-  if (!invite) throw new Error(t("invalidInvite"));
-  if (invite.usedAt) throw new Error(t("inviteUsed"));
-  if (invite.expiresAt < new Date()) throw new Error(t("inviteExpired"));
+    if (!invite) return { error: t("invalidInvite") };
+    if (invite.usedAt) return { error: t("inviteUsed") };
+    if (invite.expiresAt < new Date()) return { error: t("inviteExpired") };
 
-  const existing = await prisma.user.findUnique({
-    where: { email: parsed.email },
-  });
-  if (existing) throw new Error(t("emailRegistered"));
+    const existing = await prisma.user.findUnique({
+      where: { email: parsed.email },
+    });
+    if (existing) return { error: t("emailRegistered") };
 
-  const hashedPassword = await bcrypt.hash(parsed.password, 10);
+    const hashedPassword = await bcrypt.hash(parsed.password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      name: parsed.name,
-      email: parsed.email,
-      password: hashedPassword,
-      role: invite.role,
-    },
-  });
+    const user = await prisma.user.create({
+      data: {
+        name: parsed.name,
+        email: parsed.email,
+        password: hashedPassword,
+        role: invite.role,
+      },
+    });
 
-  await prisma.inviteLink.update({
-    where: { id: invite.id },
-    data: { usedAt: new Date(), usedById: user.id },
-  });
+    await prisma.inviteLink.update({
+      where: { id: invite.id },
+      data: { usedAt: new Date(), usedById: user.id },
+    });
 
-  return { success: true };
+    return { success: true };
+  } catch {
+    return { error: "Unexpected error" };
+  }
 }

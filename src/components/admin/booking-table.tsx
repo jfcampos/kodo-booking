@@ -28,7 +28,8 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
     if (!confirm(t("confirmCancel"))) return;
     setLoading(id);
     try {
-      await adminCancelBooking(id);
+      const result = await adminCancelBooking(id);
+      if (result && "error" in result) return;
       router.refresh();
     } finally {
       setLoading(null);

@@ -26,12 +26,13 @@ export function SettingsForm({ settings }: { settings: Settings }) {
     setLoading(true);
     setSaved(false);
     try {
-      await updateSettings({
+      const result = await updateSettings({
         granularityMinutes: Number(formData.get("granularityMinutes")),
         maxAdvanceDays: Number(formData.get("maxAdvanceDays")),
         maxActiveBookings: Number(formData.get("maxActiveBookings")),
         maxBookingDurationHours: Number(formData.get("maxBookingDurationHours")),
       });
+      if (result && "error" in result) return;
       setSaved(true);
       router.refresh();
     } finally {
