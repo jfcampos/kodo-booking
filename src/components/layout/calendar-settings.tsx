@@ -37,6 +37,15 @@ export function CalendarSettings() {
     return "3";
   });
 
+  const ALL_BLOCKS = ["dawn", "day", "night"] as const;
+  const [visibleBlocks, setVisibleBlocks] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cal-visible-blocks");
+      if (stored) return stored.split(",");
+    }
+    return [...ALL_BLOCKS];
+  });
+
   const RESOLUTION_OPTIONS = [
     { value: "15", label: "15 min" },
     { value: "30", label: "30 min" },
@@ -105,6 +114,33 @@ export function CalendarSettings() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-1 pt-1 border-t">
+          <span className="text-xs text-muted-foreground">{t("timeBlocks")}</span>
+          <div className="grid grid-cols-3 gap-1">
+            {ALL_BLOCKS.map((block) => {
+              const isActive = visibleBlocks.includes(block);
+              const isLastActive = isActive && visibleBlocks.length === 1;
+              return (
+                <Button
+                  key={block}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  disabled={isLastActive}
+                  onClick={() => {
+                    const next = isActive
+                      ? visibleBlocks.filter((b) => b !== block)
+                      : [...visibleBlocks, block];
+                    setVisibleBlocks(next);
+                    updateSetting("cal-visible-blocks", next.join(","));
+                  }}
+                >
+                  {t(block)}
+                </Button>
+              );
+            })}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2 pt-1 border-t">
           <Button

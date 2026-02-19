@@ -20,6 +20,8 @@ type DayColumnProps = {
   currentUserId: string;
   displayGranularity: number;
   slotHeightRem: number;
+  gridStartHour: number;
+  gridEndHour: number;
   onSlotClick: (date: Date, hour: number) => void;
   onBookingClick: (bookingId: string) => void;
 };
@@ -30,10 +32,13 @@ export function DayColumn({
   currentUserId,
   displayGranularity,
   slotHeightRem,
+  gridStartHour,
+  gridEndHour,
   onSlotClick,
   onBookingClick,
 }: DayColumnProps) {
-  const totalSlots = 24 * (60 / displayGranularity);
+  const visibleHours = gridEndHour - gridStartHour;
+  const totalSlots = visibleHours * (60 / displayGranularity);
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -72,7 +77,7 @@ export function DayColumn({
       </div>
       <div className={`relative ${isToday ? "bg-primary/5" : ""}`} role="group" aria-label={formatDayHeader(date)}>
         {Array.from({ length: totalSlots }, (_, i) => {
-          const totalMinutes = i * displayGranularity;
+          const totalMinutes = (gridStartHour * 60) + i * displayGranularity;
           const h = Math.floor(totalMinutes / 60);
           const m = totalMinutes % 60;
           const slotTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -108,6 +113,7 @@ export function DayColumn({
             isRecurring={booking.isRecurring}
             userColor={booking.user.color}
             remPerHour={remPerHour}
+            gridStartHour={gridStartHour}
             onClick={() => onBookingClick(booking.id)}
           />
         ))}

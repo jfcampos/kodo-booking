@@ -16,6 +16,7 @@ type BookingBlockProps = {
   isRecurring?: boolean;
   userColor: string;
   remPerHour: number;
+  gridStartHour: number;
   onClick: () => void;
 };
 
@@ -30,6 +31,7 @@ export function BookingBlock({
   isRecurring,
   userColor,
   remPerHour,
+  gridStartHour,
   onClick,
 }: BookingBlockProps) {
   const t = useTranslations("BookingDialog");
@@ -44,7 +46,7 @@ export function BookingBlock({
     <div
       className="absolute left-0 right-0 mx-1"
       style={{
-        top: `${startHour * remPerHour}rem`,
+        top: `${(startHour - gridStartHour) * remPerHour}rem`,
         height: `${duration * remPerHour}rem`,
       }}
     >

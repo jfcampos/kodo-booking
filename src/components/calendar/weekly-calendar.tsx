@@ -57,6 +57,13 @@ export function WeeklyCalendar({
     }
     return 60;
   });
+  const [visibleBlocks, setVisibleBlocks] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cal-visible-blocks");
+      if (stored) return stored.split(",");
+    }
+    return ["dawn", "day", "night"];
+  });
   const [dialogState, setDialogState] = useState<{
     open: boolean;
     mode: "create" | "view";
@@ -83,6 +90,9 @@ export function WeeklyCalendar({
       if (e.key === "cal-slot-height" && e.newValue) {
         setSlotHeightRem(Number(e.newValue));
       }
+      if (e.key === "cal-visible-blocks" && e.newValue) {
+        setVisibleBlocks(e.newValue.split(","));
+      }
       if (e.key === "cal-nav-date" && e.newValue) {
         setCurrentDate(new Date(e.newValue));
         localStorage.removeItem("cal-nav-date");
@@ -91,6 +101,18 @@ export function WeeklyCalendar({
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
+
+  // Compute visible hour ranges from active blocks
+  const BLOCK_RANGES: Record<string, [number, number]> = {
+    dawn: [0, 8],
+    day: [8, 16],
+    night: [16, 24],
+  };
+  const visibleRanges = ["dawn", "day", "night"]
+    .filter((b) => visibleBlocks.includes(b))
+    .map((b) => BLOCK_RANGES[b]);
+  const gridStartHour = visibleRanges[0]?.[0] ?? 0;
+  const gridEndHour = visibleRanges[visibleRanges.length - 1]?.[1] ?? 24;
 
   const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
   const days = getWeekDays(currentDate);
@@ -129,19 +151,24 @@ export function WeeklyCalendar({
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayEnd.getDate() + 1);
 
+    const visibleStart = new Date(dayStart);
+    visibleStart.setHours(gridStartHour, 0, 0, 0);
+    const visibleEnd = new Date(dayStart);
+    visibleEnd.setHours(gridEndHour, 0, 0, 0);
+
     return bookings
       .filter((b) => {
         const start = new Date(b.startTime);
         const end = new Date(b.endTime);
-        return start < dayEnd && end > dayStart;
+        return start < visibleEnd && end > visibleStart;
       })
       .map((b) => {
         const start = new Date(b.startTime);
         const end = new Date(b.endTime);
         return {
           ...b,
-          displayStart: start < dayStart ? dayStart : start,
-          displayEnd: end > dayEnd ? dayEnd : end,
+          displayStart: start < visibleStart ? visibleStart : start,
+          displayEnd: end > visibleEnd ? visibleEnd : end,
         };
       });
   }
@@ -182,8 +209,8 @@ export function WeeklyCalendar({
       <div className="flex">
         <div className="w-9 sm:w-14 flex-shrink-0">
           <div className="h-10 border-b" />
-          {Array.from({ length: 24 * (60 / displayGranularity) }, (_, i) => {
-            const totalMinutes = i * displayGranularity;
+          {Array.from({ length: (gridEndHour - gridStartHour) * (60 / displayGranularity) }, (_, i) => {
+            const totalMinutes = (gridStartHour * 60) + i * displayGranularity;
             const h = Math.floor(totalMinutes / 60);
             const m = totalMinutes % 60;
             return (
@@ -206,6 +233,8 @@ export function WeeklyCalendar({
             currentUserId={currentUserId}
             displayGranularity={displayGranularity}
             slotHeightRem={slotHeightRem}
+            gridStartHour={gridStartHour}
+            gridEndHour={gridEndHour}
             onSlotClick={handleSlotClick}
             onBookingClick={handleBookingClick}
           />
