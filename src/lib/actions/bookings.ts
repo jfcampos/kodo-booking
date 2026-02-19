@@ -63,11 +63,6 @@ export async function createBooking(input: {
       return { error: t("tooFarInAdvance", { days: settings.maxAdvanceDays }) };
     }
 
-    // Validate start is in the future
-    if (parsed.startTime <= new Date()) {
-      return { error: t("cannotBookPast") };
-    }
-
     // Check active bookings limit
     const activeCount = await prisma.booking.count({
       where: {

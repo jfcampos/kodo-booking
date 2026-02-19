@@ -56,7 +56,10 @@
     "extraTall": "Extra alto",
     "noRooms": "No hay salas disponibles.",
     "noRoomsAdmin": "Ve a <link>Admin \u2192 Salas</link> para agregar una.",
-"bookSlot": "Reservar {day} a las {time}"
+"bookSlot": "Reservar {day} a las {time}",
+    "monthlyTitle": "Calendario mensual",
+    "prevMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente"
   },
   "BookingDialog": {
     "newBooking": "Nueva reserva",

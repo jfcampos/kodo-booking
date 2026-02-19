@@ -3,8 +3,12 @@ import { twMerge } from "tailwind-merge";
 import {
   startOfWeek,
   endOfWeek,
+  startOfMonth,
+  endOfMonth,
   addWeeks,
   subWeeks,
+  addMonths,
+  subMonths,
   eachDayOfInterval,
   format,
   setDefaultOptions,
@@ -36,8 +40,44 @@ export function prevWeek(date: Date) {
   return subWeeks(date, 1);
 }
 
+export function getMonthRange(date: Date) {
+  const monthStart = startOfMonth(date);
+  const monthEnd = endOfMonth(date);
+  const start = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const end = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  return { start, end };
+}
+
+export function getMonthDays(date: Date) {
+  const { start, end } = getMonthRange(date);
+  return eachDayOfInterval({ start, end });
+}
+
+export function nextMonth(date: Date) {
+  return addMonths(date, 1);
+}
+
+export function prevMonth(date: Date) {
+  return subMonths(date, 1);
+}
+
 export function formatTime(date: Date) {
   return format(date, "HH:mm");
+}
+
+export function formatHourRange(start: Date, end: Date) {
+  const fmt = (d: Date) =>
+    d.getMinutes() === 0 ? `${d.getHours()}` : `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${fmt(start)}-${fmt(end)}h`;
+}
+
+export function contrastText(hex: string): string {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#000000" : "#ffffff";
 }
 
 function capitalize(s: string) {

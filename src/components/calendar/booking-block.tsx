@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { formatTime, overlapsAlarmWindow } from "@/lib/utils";
+import { formatTime, formatHourRange, overlapsAlarmWindow } from "@/lib/utils";
 import { AlertTriangle, Repeat } from "lucide-react";
 
 type BookingBlockProps = {
@@ -63,6 +63,7 @@ export function BookingBlock({
           {isRecurring && <Repeat className="h-3 w-3 flex-shrink-0" />}
           {title}
         </div>
+        <div className="truncate opacity-75">{formatHourRange(startTime, endTime)}</div>
         <div className="truncate opacity-75">{userName}</div>
       </button>
       {hasAlarmWarning && (

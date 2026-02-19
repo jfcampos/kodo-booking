@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { stopImpersonating } from "@/lib/actions/users";
 import { Button } from "@/components/ui/button";
 import { CalendarSettings } from "@/components/layout/calendar-settings";
+import { ViewModeToggle } from "@/components/layout/view-mode-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -42,6 +43,7 @@ export async function Header() {
             Kodo Booking
           </Link>
           <div className="flex items-center gap-1">
+            <ViewModeToggle />
             <CalendarSettings />
             <UserMenu
               name={session.user.name ?? null}

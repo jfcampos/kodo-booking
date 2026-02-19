@@ -65,6 +65,15 @@ export function WeeklyCalendar({
     booking?: Booking;
   }>({ open: false, mode: "create" });
 
+  // Consume pending nav date on mount (set by monthly view before switching)
+  useEffect(() => {
+    const pending = localStorage.getItem("cal-nav-date");
+    if (pending) {
+      setCurrentDate(new Date(pending));
+      localStorage.removeItem("cal-nav-date");
+    }
+  }, []);
+
   // Sync settings from header CalendarSettings popover
   useEffect(() => {
     function onStorage(e: StorageEvent) {
@@ -73,6 +82,10 @@ export function WeeklyCalendar({
       }
       if (e.key === "cal-slot-height" && e.newValue) {
         setSlotHeightRem(Number(e.newValue));
+      }
+      if (e.key === "cal-nav-date" && e.newValue) {
+        setCurrentDate(new Date(e.newValue));
+        localStorage.removeItem("cal-nav-date");
       }
     }
     window.addEventListener("storage", onStorage);

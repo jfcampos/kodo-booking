@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { listRooms } from "@/lib/actions/rooms";
 import { prisma } from "@/lib/prisma";
-import { WeeklyCalendar } from "@/components/calendar/weekly-calendar";
+import { CalendarView } from "@/components/calendar/calendar-view";
 import { getTranslations } from "next-intl/server";
 
 export default async function HomePage() {
@@ -34,7 +34,7 @@ export default async function HomePage() {
   }
 
   return (
-    <WeeklyCalendar
+    <CalendarView
       rooms={rooms}
       currentUserId={session.user.id}
       currentUserRole={session.user.role}
