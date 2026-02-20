@@ -176,7 +176,7 @@ export function MonthlyCalendar({
                   type="button"
                   onClick={() => handleDayClick(day)}
                   style={{ minHeight: `${slotHeightRem * 2.5}rem` }}
-                  className={`relative p-1 sm:p-2 border-r last:border-r-0 transition-colors hover:bg-muted/50 flex flex-col items-center ${
+                  className={`relative p-0.5 sm:p-2 border-r last:border-r-0 transition-colors hover:bg-muted/50 flex flex-col ${
                     !inMonth || isPast ? "opacity-40" : ""
                   } ${today ? "bg-primary/5" : ""}`}
                 >
@@ -191,19 +191,24 @@ export function MonthlyCalendar({
                   </span>
 
                   {/* Booking indicators */}
-                  <div className="mt-1 space-y-0.5 w-full">
-                    {/* Mobile: dots */}
-                    <div className="flex gap-0.5 flex-wrap sm:hidden">
-                      {dayBookings.slice(0, 5).map((b) => (
+                  <div className="mt-0.5 w-full">
+                    {/* Mobile: colored pills with title */}
+                    <div className="flex flex-col gap-px sm:hidden">
+                      {dayBookings.slice(0, 3).map((b) => (
                         <div
                           key={b.id}
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: b.user.color }}
-                        />
+                          className="rounded-sm px-0.5 text-[10px] leading-3 truncate w-full"
+                          style={{
+                            backgroundColor: b.user.color,
+                            color: contrastText(b.user.color),
+                          }}
+                        >
+                          {b.title}
+                        </div>
                       ))}
-                      {dayBookings.length > 5 && (
+                      {dayBookings.length > 3 && (
                         <span className="text-[8px] text-muted-foreground">
-                          +{dayBookings.length - 5}
+                          +{dayBookings.length - 3}
                         </span>
                       )}
                     </div>
