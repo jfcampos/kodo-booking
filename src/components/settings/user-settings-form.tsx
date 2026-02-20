@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateMyName, updateMyColor } from "@/lib/actions/users";
+import { BOOKING_COLORS } from "@/lib/colors";
+import { Check } from "lucide-react";
 
 export function UserSettingsForm({
   name,
@@ -23,6 +25,7 @@ export function UserSettingsForm({
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState(color);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -31,7 +34,7 @@ export function UserSettingsForm({
     try {
       const nameResult = await updateMyName(formData.get("name") as string);
       if (nameResult && "error" in nameResult) { setError(nameResult.error); return; }
-      const colorResult = await updateMyColor(formData.get("color") as string);
+      const colorResult = await updateMyColor(selectedColor);
       if (colorResult && "error" in colorResult) { setError(colorResult.error); return; }
       setSaved(true);
       router.refresh();
@@ -44,27 +47,37 @@ export function UserSettingsForm({
 
   return (
     <form action={handleSubmit} className="max-w-md space-y-4">
-      <div>
+      <div className="space-y-3">
         <Label>{tc("email")}</Label>
         <Input value={email} disabled />
       </div>
-      <div>
+      <div className="space-y-3">
         <Label>{tc("name")}</Label>
         <Input name="name" defaultValue={name} required maxLength={100} />
       </div>
-      <div>
+      <div className="space-y-3">
         <Label>{t("bookingColor")}</Label>
-        <div className="flex items-center gap-3">
-          <input
-            type="color"
-            name="color"
-            defaultValue={color}
-            className="h-10 w-14 cursor-pointer rounded border bg-transparent p-1"
-          />
-          <span className="text-sm text-muted-foreground">
-            {t("colorHint")}
-          </span>
+        <div className="flex flex-wrap gap-2">
+          {BOOKING_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setSelectedColor(c)}
+              className="flex items-center justify-center h-8 w-8 rounded-full border-2 cursor-pointer transition-transform hover:scale-110"
+              style={{
+                backgroundColor: c,
+                borderColor: selectedColor === c ? "white" : "transparent",
+              }}
+            >
+              {selectedColor === c && (
+                <Check className="h-4 w-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+              )}
+            </button>
+          ))}
         </div>
+        <span className="text-sm text-muted-foreground mt-1 block">
+          {t("colorHint")}
+        </span>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={loading}>

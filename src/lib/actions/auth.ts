@@ -6,6 +6,7 @@ import { registerSchema } from "@/lib/validations/user";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
+import { getColorForName } from "@/lib/colors";
 
 export async function googleSignUpWithInvite(token: string): Promise<{ error: string } | void> {
   const t = await getTranslations("ServerErrors");
@@ -59,6 +60,7 @@ export async function register(input: {
         email: parsed.email,
         password: hashedPassword,
         role: invite.role,
+        color: getColorForName(parsed.name),
       },
     });
 

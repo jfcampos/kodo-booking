@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import type { Role } from "@prisma/client";
+import { getColorForName } from "@/lib/colors";
 
 export const IMPERSONATE_COOKIE = "kodo-impersonate";
 
@@ -113,17 +114,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async createUser({ user }) {
+      const color = getColorForName(user.name || user.email || user.id!);
+
       // First user becomes admin
       const userCount = await prisma.user.count();
       if (userCount === 1) {
         await prisma.user.update({
           where: { id: user.id! },
-          data: { role: "ADMIN" },
+          data: { role: "ADMIN", color },
         });
         return;
       }
 
       // Assign role from invite token if present
+      let roleAssigned = false;
       try {
         const cookieStore = await cookies();
         const inviteToken = cookieStore.get("kodo-invite-token")?.value;
@@ -134,8 +138,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (invite && !invite.usedAt && invite.expiresAt >= new Date()) {
             await prisma.user.update({
               where: { id: user.id! },
-              data: { role: invite.role },
+              data: { role: invite.role, color },
             });
+            roleAssigned = true;
             await prisma.inviteLink.update({
               where: { id: invite.id },
               data: { usedAt: new Date(), usedById: user.id! },
@@ -145,6 +150,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       } catch {
         // cookies() may fail in certain contexts
+      }
+
+      // Ensure color is always set even if no invite was processed
+      if (!roleAssigned) {
+        await prisma.user.update({
+          where: { id: user.id! },
+          data: { color },
+        });
       }
     },
   },
