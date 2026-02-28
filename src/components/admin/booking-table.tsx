@@ -41,7 +41,7 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
       {bookings.map((b) => {
         const isCancelled = b.cancelled;
         const isPast = new Date(b.endTime) < new Date();
-        const canCancel = !isCancelled && new Date(b.startTime) > new Date();
+        const canCancel = !isCancelled;
 
         return (
           <div key={b.id} className="rounded-lg border p-3 space-y-1.5">

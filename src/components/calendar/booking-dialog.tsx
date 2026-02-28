@@ -132,7 +132,7 @@ export function BookingDialog({
   const isAdmin = currentUserRole === "ADMIN";
   const canEdit = isOwn || isAdmin;
   const canCancel =
-    canEdit && booking && new Date(booking.startTime) > new Date();
+    canEdit && booking && (isAdmin || new Date(booking.startTime) > new Date());
 
   const defaultEndTimeIndex = useMemo(() => {
     if (endTimeOptions.length === 0) return 0;

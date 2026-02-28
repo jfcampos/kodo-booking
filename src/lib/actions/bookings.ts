@@ -147,7 +147,7 @@ export async function cancelBooking(bookingId: string): Promise<{ error: string 
     if (booking.userId !== user.id && user.role !== "ADMIN") {
       return { error: t("canOnlyCancelOwn") };
     }
-    if (booking.startTime <= new Date()) {
+    if (booking.startTime <= new Date() && user.role !== "ADMIN") {
       return { error: t("alreadyStarted") };
     }
 

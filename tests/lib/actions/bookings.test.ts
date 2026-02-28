@@ -169,6 +169,25 @@ describe("cancelBooking", () => {
     });
   });
 
+  it("admin can cancel own past booking", async () => {
+    (auth as any).mockResolvedValue({
+      user: { id: "admin1", role: "ADMIN" },
+    });
+    const past = new Date(Date.now() - 86400000);
+    (prisma.booking.findUniqueOrThrow as any).mockResolvedValue({
+      id: "b3",
+      userId: "admin1",
+      startTime: past,
+    });
+    (prisma.booking.update as any).mockResolvedValue({});
+
+    await cancelBooking("b3");
+    expect(prisma.booking.update).toHaveBeenCalledWith({
+      where: { id: "b3" },
+      data: { cancelled: true },
+    });
+  });
+
   it("rejects cancelling someone else's booking", async () => {
     (prisma.booking.findUniqueOrThrow as any).mockResolvedValue({
       id: "b2",
