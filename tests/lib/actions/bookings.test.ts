@@ -188,6 +188,25 @@ describe("cancelBooking", () => {
     });
   });
 
+  it("admin can cancel another admin's booking", async () => {
+    (auth as any).mockResolvedValue({
+      user: { id: "admin1", role: "ADMIN" },
+    });
+    const future = new Date(Date.now() + 86400000);
+    (prisma.booking.findUniqueOrThrow as any).mockResolvedValue({
+      id: "b4",
+      userId: "admin2",
+      startTime: future,
+    });
+    (prisma.booking.update as any).mockResolvedValue({});
+
+    await cancelBooking("b4");
+    expect(prisma.booking.update).toHaveBeenCalledWith({
+      where: { id: "b4" },
+      data: { cancelled: true },
+    });
+  });
+
   it("rejects cancelling someone else's booking", async () => {
     (prisma.booking.findUniqueOrThrow as any).mockResolvedValue({
       id: "b2",
