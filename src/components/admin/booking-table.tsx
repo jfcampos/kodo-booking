@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { adminCancelBooking } from "@/lib/actions/bookings";
 import { format } from "date-fns";
+import { ChevronRight } from "lucide-react";
 
 type Booking = {
   id: string;
@@ -18,11 +18,38 @@ type Booking = {
   user: { name: string | null; email: string };
 };
 
+function sortByDate(a: Booking, b: Booking) {
+  return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+}
+
 export function BookingTable({ bookings }: { bookings: Booking[] }) {
   const router = useRouter();
   const t = useTranslations("AdminBookings");
   const tc = useTranslations("Common");
   const [loading, setLoading] = useState<string | null>(null);
+
+  const { active, past, cancelled } = useMemo(() => {
+    const now = new Date();
+    const active: Booking[] = [];
+    const past: Booking[] = [];
+    const cancelled: Booking[] = [];
+
+    for (const b of bookings) {
+      if (b.cancelled) {
+        cancelled.push(b);
+      } else if (new Date(b.endTime) < now) {
+        past.push(b);
+      } else {
+        active.push(b);
+      }
+    }
+
+    active.sort(sortByDate);
+    past.sort(sortByDate);
+    cancelled.sort(sortByDate);
+
+    return { active, past, cancelled };
+  }, [bookings]);
 
   async function handleCancel(id: string) {
     if (!confirm(t("confirmCancel"))) return;
@@ -36,47 +63,61 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
     }
   }
 
-  return (
-    <div className="space-y-3">
-      {bookings.map((b) => {
-        const isCancelled = b.cancelled;
-        const isPast = new Date(b.endTime) < new Date();
-        const canCancel = !isCancelled;
+  function renderCard(b: Booking, canCancel: boolean) {
+    return (
+      <div key={b.id} className="rounded-lg border p-3 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium truncate">{b.title}</p>
+          <p className="text-sm text-muted-foreground truncate">
+            {b.user.name ?? b.user.email} &middot; {b.room.name}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {format(new Date(b.startTime), "d MMM HH:mm")} &ndash;{" "}
+            {format(new Date(b.endTime), "HH:mm")}
+          </p>
+        </div>
+        {canCancel && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => handleCancel(b.id)}
+            disabled={loading === b.id}
+          >
+            {tc("cancel")}
+          </Button>
+        )}
+      </div>
+    );
+  }
 
-        return (
-          <div key={b.id} className="rounded-lg border p-3 space-y-1.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-medium truncate">{b.title}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {b.user.name ?? b.user.email} &middot; {b.room.name}
-                </p>
-              </div>
-              <Badge
-                variant={isCancelled ? "secondary" : isPast ? "outline" : "default"}
-                className="shrink-0"
-              >
-                {isCancelled ? t("cancelled") : isPast ? t("past") : t("active")}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(b.startTime), "d MMM HH:mm")} &ndash;{" "}
-              {format(new Date(b.endTime), "HH:mm")}
-            </p>
-            {canCancel && (
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full"
-                onClick={() => handleCancel(b.id)}
-                disabled={loading === b.id}
-              >
-                {tc("cancel")}
-              </Button>
-            )}
-          </div>
-        );
-      })}
+  function renderSection(
+    label: string,
+    items: Booking[],
+    colorClass: string,
+    canCancel: boolean,
+    defaultOpen: boolean,
+  ) {
+    if (items.length === 0) return null;
+    return (
+      <details open={defaultOpen} className="group">
+        <summary className={`flex items-center gap-2 cursor-pointer select-none rounded-lg px-3 py-2 ${colorClass}`}>
+          <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+          <span className="font-semibold">{label}</span>
+          <span className="text-sm opacity-70">({items.length})</span>
+        </summary>
+        <div className="space-y-2 mt-2">
+          {items.map((b) => renderCard(b, canCancel))}
+        </div>
+      </details>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {renderSection(t("active"), active, "bg-green-500/10 text-green-700 dark:text-green-400", true, true)}
+      {renderSection(t("past"), past, "bg-muted text-muted-foreground", true, false)}
+      {renderSection(t("cancelled"), cancelled, "bg-red-500/10 text-red-700 dark:text-red-400", false, false)}
     </div>
   );
 }
